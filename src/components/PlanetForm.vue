@@ -56,7 +56,7 @@
           <b-checkbox v-model="settings.water">Seas</b-checkbox>
         </b-field>
 
-        <b-field label="Sea level" v-if="settings.water">
+        <b-field label="Sea level">
           <b-slider v-model="settings.seaLevel"></b-slider>
         </b-field>
 

@@ -6,7 +6,7 @@
 
 import { makeNoise3D } from 'open-simplex-noise'
 import { NoiseSettings } from './types'
-import { sharpenCoast } from './coastline'
+import { sharpenCoast, dryHeight } from './coastline'
 import { cubeMapPosition, CUBE_PAD } from './cubeMap'
 const ctx: Worker = self as any;
 
@@ -75,11 +75,14 @@ const _buildTextures = async (
       }
     }
 
-    value = Math.max(value * 128 + 128, 255 * settings[0].min)
-    value = Math.round(normalize(value, 255 * settings[0].min, 255) * 255)
-    value = Math.min(value, 255)
-    // Dry planets: continuous terrain, no shore step, no shiny sea
-    if (water) value = sharpenCoast(value)
+    const floor = 255 * settings[0].min
+    if (water) {
+      value = Math.max(value * 128 + 128, floor)
+      value = sharpenCoast(Math.min(Math.round(normalize(value, floor, 255) * 255), 255))
+    } else {
+      // Dry: sea level marks basins with relief, not a flat shiny sea
+      value = dryHeight(value * 128 + 128, floor)
+    }
     if (water && value <= 1) {
       heightData[a] = heightData[a + 1] = heightData[a + 2] = 0
       specularData[a] = specularData[a + 1] = specularData[a + 2] = 100
