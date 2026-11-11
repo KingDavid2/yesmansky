@@ -1,4 +1,3 @@
-const backgroundWorker = require('worker-loader!./TextureBuilder.worker')
 import { NoiseSettings } from './types'
 
 type BuiltTextures = {
@@ -15,7 +14,7 @@ type BuiltTextures = {
  */
 class TextureBuilder {
   static buildTextures(seed: number, noiseSettings: NoiseSettings, heightMapImage: ImageData, specularMapImage: ImageData, diffuseMapImage: ImageData): Promise<BuiltTextures> {
-    const worker = new backgroundWorker()
+    const worker = new Worker(new URL('./TextureBuilder.worker.ts', import.meta.url), { type: 'module' })
 
     return new Promise((resolve) => {
       worker.addEventListener("message", (event) => {

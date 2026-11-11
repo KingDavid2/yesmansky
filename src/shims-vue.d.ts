@@ -1,10 +1,5 @@
-import Vue from 'vue'
 declare module '*.vue' {
-  export default Vue
-}
-
-declare module 'vue/types/vue' {
-  interface Vue {
-    $ga: any // vue-analytics
-  }
+  import { DefineComponent } from 'vue'
+  const component: DefineComponent
+  export default component
 }

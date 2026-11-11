@@ -1,4 +1,4 @@
-const MobileDetect = require('mobile-detect')
+import MobileDetect from 'mobile-detect'
 
 /**
  * Support class that provides some hardware info utils

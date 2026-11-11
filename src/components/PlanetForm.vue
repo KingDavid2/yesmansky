@@ -40,7 +40,7 @@
         </b-field>
 
         <b-field label="Landmass scale">
-          <b-slider v-model="settings.landMassSize" :value="50"></b-slider>
+          <b-slider v-model="settings.landMassSize"></b-slider>
         </b-field>
 
         <b-field label="Roughness">
@@ -53,7 +53,7 @@
         </b-field>
 
         <b-field label="Sea level">
-          <b-slider v-model="settings.seaLevel" :value="50"></b-slider>
+          <b-slider v-model="settings.seaLevel"></b-slider>
         </b-field>
 
         <label class="label is-medium has-text-warning">Atmosphere</label>
@@ -88,12 +88,12 @@
 </template>
 
 <script lang="ts">
-import _ from 'lodash';
-import Vue from 'vue';
+import { debounce } from 'lodash-es';
+import { defineComponent, markRaw } from 'vue';
 import { Planet } from '../Planet/Planet';
 import { Game } from '../Game';
 
-export default Vue.extend({
+export default defineComponent({
   name: 'PlanetForm',
   props: {
     game: Game,
@@ -116,7 +116,7 @@ export default Vue.extend({
     }
   },
   created: function () {
-    this.rebuildPlanet = _.debounce(this.rebuildPlanet, 2000)
+    this.rebuildPlanet = debounce(this.rebuildPlanet, 2000)
   },
   mounted: function () {
     setTimeout(() => {
@@ -144,7 +144,6 @@ export default Vue.extend({
       const randomBaseName = baseName[Math.floor(Math.random()*baseName.length)]
       const randomNamePart = Math.random().toString(36).substring(6+Math.random()*6)
       this.settings.terrainSeed = `${randomBaseName}${randomNamePart}`
-      this.$ga.event('Planet', 'random', 'seed')
     },
     setRandomSettings: function () {
       const possibleAtmospheres = ['blue', 'orange', 'white', 'green', 'purple']
@@ -153,8 +152,7 @@ export default Vue.extend({
       this.settings.roughness = Math.round(Math.random()*4)
       this.settings.seaLevel = Math.round(Math.random()*55)
       this.settings.atmosphereDensity = Math.round(Math.random()*4)
-      this.settings.atmosphereColor = possibleAtmospheres[Math.floor(Math.random()*possibleAtmospheres.length)];
-      (this as any).$ga.event('Planet', 'random', 'settings')
+      this.settings.atmosphereColor = possibleAtmospheres[Math.floor(Math.random()*possibleAtmospheres.length)]
     },
     fadeIn: function () {
       const disapear = setInterval(() => {
@@ -166,9 +164,8 @@ export default Vue.extend({
     },
     rebuildPlanet: function (newSettings) {
       console.log('rebuilding planet...');
-      this.planetInstance.dispose();
-      (this as any).$ga.event('Planet', 'changed', this.save())
-      this.game.planet = this.planetInstance = new Planet('planet', newSettings, this.game.scene)
+      this.planetInstance.dispose()
+      this.game.planet = this.planetInstance = markRaw(new Planet('planet', { ...newSettings }, this.game.scene))
     }
   }
 })

@@ -12,13 +12,13 @@
 </template>
 
 <script lang="ts">
-import Vue from 'vue';
+import { defineComponent, markRaw } from 'vue';
 import Hello from './components/Hello.vue';
 import PlanetForm from './components/PlanetForm.vue';
 import Footer from './components/Footer.vue';
 import { Game } from './Game'
 
-export default Vue.extend({
+export default defineComponent({
   name: 'app',
   components: {
     Hello,
@@ -28,7 +28,7 @@ export default Vue.extend({
   data: function () {
     return {
       canvasBlur: 10,
-      game: undefined,
+      game: undefined as Game | undefined,
       planet: undefined
     }
   },
@@ -37,8 +37,9 @@ export default Vue.extend({
     view.width = window.innerWidth
     view.height = window.innerHeight
 
-    this.game = window.game = new Game(view) // Instantiate game
-    this.planet = window.game.planet
+    // markRaw: keep Babylon objects out of Vue 3 reactive proxies
+    this.game = window.game = markRaw(new Game(view)) // Instantiate game
+    this.planet = markRaw(window.game.planet)
 
     setTimeout(() => {
       this.unblur()

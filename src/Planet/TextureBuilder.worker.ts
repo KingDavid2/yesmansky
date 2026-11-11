@@ -4,7 +4,7 @@
  * @see https://github.com/webpack-contrib/worker-loader
  */
 
-import OpenSimplexNoise from 'open-simplex-noise'
+import { makeNoise3D } from 'open-simplex-noise'
 import { NoiseSettings } from './types'
 const ctx: Worker = self as any;
 
@@ -33,7 +33,7 @@ const _buildTextures = async (
 ): Promise<BuiltTextures> => {
   const settings = noiseSettings
 
-  const openSimplex = new OpenSimplexNoise(seed);
+  const noise3D = makeNoise3D(seed)
 
   const numberOfPixels = heightData.length / 4
   const colorGradientValues = diffuseData.slice(0, 256 * 4)
@@ -66,10 +66,10 @@ const _buildTextures = async (
       for (let pass = 0; pass < layerSettings.passes; pass++) {
         let noiseValue: number
         if (layerSettings.hard) {
-          noiseValue = 1 - 4*Math.abs(openSimplex.noise3D(layerSettings.shift + r * roughness, g * roughness, b * roughness));
+          noiseValue = 1 - 4*Math.abs(noise3D(layerSettings.shift + r * roughness, g * roughness, b * roughness));
           noiseValue *= (noiseValue * noiseValue) * strength
         } else {
-          noiseValue = openSimplex.noise3D(layerSettings.shift + r * roughness, g * roughness, b * roughness) * strength;
+          noiseValue = noise3D(layerSettings.shift + r * roughness, g * roughness, b * roughness) * strength;
         }
         value += noiseValue
         roughness = roughness * 2
@@ -98,5 +98,3 @@ const _buildTextures = async (
     diffuseData
   }
 }
-
-export default {} as typeof Worker & { new(): Worker };

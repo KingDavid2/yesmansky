@@ -180,7 +180,7 @@ class PlanetMaterialManager {
 
     const sphereNormalTexture = new Image();
     sphereNormalTexture.src = `textures/planetObjectSpaceNormal.png`;
-    await new Promise((resolve) => {
+    await new Promise<void>((resolve) => {
       sphereNormalTexture.onload = () => resolve()
     })
 

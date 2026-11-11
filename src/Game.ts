@@ -1,5 +1,5 @@
 import * as BABYLON from '@babylonjs/core/Legacy/legacy';
-import * as localforage from 'localforage';
+import localforage from 'localforage'
 import { Planet } from './Planet/Planet';
 import { HardwareInfo } from './Infrastructure/HardwareInfo';
 
@@ -45,7 +45,7 @@ class Game {
     this.setGraphicalSettings()
     this.prepareGraphicalPipeline()
 
-    if (process.env.NODE_ENV != 'production') {
+    if (import.meta.env.DEV) {
       this.scene.debugLayer.show({ embedMode: true, overlay: true });
     }
 

@@ -1,21 +1,16 @@
 <template>
     <footer id="footer" class="content has-text-centered">
         <span class="tag is-black">
-            👨‍💻 by <a v-on:click="goto" target="_blank" href="https://github.com/Zizaco">Zizaco</a>
+            👨‍💻 by <a target="_blank" href="https://github.com/Zizaco">Zizaco</a>
         </span>
     </footer>
 </template>
 
 <script lang="ts">
-import Vue from 'vue';
+import { defineComponent } from 'vue';
 
-export default Vue.extend({
+export default defineComponent({
   name: 'Footer',
-  methods: {
-    goto: function() {
-      this.$ga.event('Goto', 'author', 'https://github.com/Zizaco')
-    }
-  }
 })
 </script>
 

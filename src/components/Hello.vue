@@ -14,9 +14,9 @@
 </template>
 
 <script lang="ts">
-import Vue from 'vue';
+import { defineComponent } from 'vue';
 
-export default Vue.extend({
+export default defineComponent({
   name: 'Hello',
   data: function () {
     return {
@@ -33,7 +33,6 @@ export default Vue.extend({
       const disapear = setInterval(() => {
         this.alpha = Math.max(0, this.alpha-0.02)
         if (this.alpha <= 0) {
-          this.$ga.event('Intro', 'finished')
           clearInterval(disapear)
         }
       }, 50)

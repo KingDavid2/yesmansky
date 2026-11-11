@@ -1,10 +1,13 @@
 // Overrides
-@if $bulmaswatch-import-font {
+@use "bulma/sass" as *;
+@use "variables" as v;
+@use "bulma/sass/utilities/mixins";
+@if v.$bulmaswatch-import-font {
     @import url(https://fonts.googleapis.com/css?family=Nunito+Sans);
 }
 
 hr {
-  height: $border-width;
+  height: v.$border-width;
 }
 
 h6 {
@@ -22,7 +25,7 @@ a {
 
 .button {
   transition: all 200ms ease;
-  border-width: $border-width;
+  border-width: v.$border-width;
   text-transform: uppercase;
   color: $white;
 
@@ -34,7 +37,7 @@ a {
   }
   @each $name, $pair in $colors {
     $color: nth($pair, 1);
-    $color-invert: nth($pair, 2);
+    $color-invert: bulmaFindColorInvert(nth($pair, 1));
 
     &.is-#{$name} {
       &.is-hovered,
@@ -75,7 +78,7 @@ a {
 .textarea {
   transition: all 200ms ease;
   box-shadow: none;
-  border-width: $border-width;
+  border-width: v.$border-width;
   padding-left: 1em;
   padding-right: 1em;
 }
@@ -83,7 +86,7 @@ a {
 .select {
   &:after,
   select {
-    border-width: $border-width;
+    border-width: v.$border-width;
   }
 }
 
@@ -92,7 +95,7 @@ a {
     .button,
     .input,
     .select {
-      margin-right: -$border-width;
+      margin-right: -1 * v.$border-width;
     }
   }
 }
@@ -104,7 +107,7 @@ a {
 .card {
   $card-border-color: lighten($grey-darker, 5);
   box-shadow: none;
-  border: $border-width solid $card-border-color;
+  border: v.$border-width solid $card-border-color;
   background-color: $grey-darker;
   border-radius: $radius;
 
@@ -126,7 +129,7 @@ a {
 
   .card-footer,
   .card-footer-item {
-    border-width: $border-width;
+    border-width: v.$border-width;
     border-color: $card-border-color;
   }
 }
@@ -134,7 +137,7 @@ a {
 .notification {
   @each $name, $pair in $colors {
     $color: nth($pair, 1);
-    $color-invert: nth($pair, 2);
+    $color-invert: bulmaFindColorInvert(nth($pair, 1));
 
     &.is-#{$name} {
       a:not(.button) {
@@ -171,7 +174,7 @@ a {
 }
 
 .message-body {
-  border-width: $border-width;
+  border-width: v.$border-width;
   border-color: $grey-dark;
 }
 
@@ -199,7 +202,7 @@ a {
     text-transform: none;
   }
 
-  @include touch {
+  @include mixins.touch {
     .navbar-menu {
       background-color: $navbar-background-color;
       border-radius: 0 0 $radius $radius;
@@ -215,16 +218,16 @@ body > .navbar {
 .pagination-link,
 .pagination-next,
 .pagination-previous {
-  border-width: $border-width;
+  border-width: v.$border-width;
 }
 
 .panel-block,
 .panel-heading,
 .panel-tabs {
-  border-width: $border-width;
+  border-width: v.$border-width;
 
   &:first-child {
-    border-top-width: $border-width;
+    border-top-width: v.$border-width;
   }
 }
 
@@ -234,44 +237,44 @@ body > .navbar {
 
 .panel-tabs {
   a {
-    border-width: $border-width;
-    margin-bottom: -$border-width;
+    border-width: v.$border-width;
+    margin-bottom: -1 * v.$border-width;
 
     &.is-active {
-      border-bottom-color: $link-active;
+      border-bottom-color: v.$link-active;
     }
   }
 }
 
 .panel-block {
   &:hover {
-    color: $link-hover;
+    color: v.$link-hover;
 
     .panel-icon {
-      color: $link-hover;
+      color: v.$link-hover;
     }
   }
 
   &.is-active {
     .panel-icon {
-      color: $link-active;
+      color: v.$link-active;
     }
   }
 }
 
 .tabs {
   a {
-    border-bottom-width: $border-width;
-    margin-bottom: -$border-width;
+    border-bottom-width: v.$border-width;
+    margin-bottom: -1 * v.$border-width;
   }
 
   ul {
-    border-bottom-width: $border-width;
+    border-bottom-width: v.$border-width;
   }
 
   &.is-boxed {
     a {
-      border-width: $border-width;
+      border-width: v.$border-width;
     }
 
     li.is-active a {
@@ -281,12 +284,12 @@ body > .navbar {
 
   &.is-toggle {
     li a {
-      border-width: $border-width;
+      border-width: v.$border-width;
       margin-bottom: 0;
     }
 
     li + li {
-      margin-left: -$border-width;
+      margin-left: -1 * v.$border-width;
     }
   }
 }
@@ -295,13 +298,13 @@ body > .navbar {
   // Colors
   @each $name, $pair in $colors {
     $color: nth($pair, 1);
-    $color-invert: nth($pair, 2);
+    $color-invert: bulmaFindColorInvert(nth($pair, 1));
 
     &.is-#{$name} {
       .navbar {
         .navbar-dropdown {
           .navbar-item:hover {
-            background-color: $navbar-dropdown-item-hover-background-color;
+            background-color: v.$navbar-dropdown-item-hover-background-color;
           }
         }
       }

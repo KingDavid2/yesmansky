@@ -1,5 +1,5 @@
-import OpenSimplexNoise from 'open-simplex-noise'
-const colorPallets = require('./color-pallets.json')
+import { makeNoise3D } from 'open-simplex-noise'
+import colorPallets from './color-pallets.json'
 
 type rgba = { r: number, g: number, b: number, a: number }
 type colorGradient = {
@@ -12,12 +12,12 @@ type colorGradient = {
  */
 class ColorGradientFactory {
   static generateGradient(seed): Array<rgba> {
-    const openSimplex = new OpenSimplexNoise(seed);
-    return this.generatePallete(openSimplex)
+    const noise3D = makeNoise3D(seed)
+    return this.generatePallete(noise3D)
   }
 
-  protected static generatePallete (noise: OpenSimplexNoise): Array<rgba> {
-    const chosenPallet = colorPallets.length / 2 + Math.round(noise.noise3D(23, 23, 23) * colorPallets.length * 0.5)
+  protected static generatePallete (noise3D: (x: number, y: number, z: number) => number): Array<rgba> {
+    const chosenPallet = colorPallets.length / 2 + Math.round(noise3D(23, 23, 23) * colorPallets.length * 0.5)
     const result = []
     for (let i = 0; i < colorPallets[chosenPallet].length; i++) {
       result.push({
