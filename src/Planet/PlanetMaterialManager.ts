@@ -168,7 +168,10 @@ class PlanetMaterialManager {
     const specularMapCtx = this.specularMap.getContext();
     const diffuseMapCtx = this.diffuseMap.getContext();
 
-    const colorGradient = ColorGradientFactory.generateGradient(hashStringToInt(this.options.terrainSeed))
+    const colorGradient = ColorGradientFactory.generateGradient(
+      hashStringToInt(this.options.terrainSeed),
+      this.options.realColors ? this.options.realPalette : undefined
+    )
 
     const sphereNormalTexture = new Image();
     sphereNormalTexture.src = `textures/planetObjectSpaceNormal.png`;

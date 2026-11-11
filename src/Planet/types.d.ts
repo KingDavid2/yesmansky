@@ -7,6 +7,8 @@ type PlanetOptions = {
   coastDetail: number,
   atmosphereDensity: number,
   atmosphereColor: "blue" | "orange" | "white" | "green" | "purple",
+  realColors?: boolean, // use realPalette instead of the seeded random one
+  realPalette?: string, // key of REAL_PALETTES
   meshOptions: { diameter: number, diameterX: number, subdivisions: number }
 }
 

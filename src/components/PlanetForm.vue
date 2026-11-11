@@ -65,6 +65,16 @@
           </b-slider>
         </b-field>
 
+        <b-field>
+          <b-checkbox v-model="settings.realColors">Real universe colors</b-checkbox>
+        </b-field>
+
+        <b-field label="Color palette" v-if="settings.realColors">
+          <b-select v-model="settings.realPalette" expanded>
+            <option v-for="(palette, key) in realPalettes" :key="key" :value="key">{{ palette.label }}</option>
+          </b-select>
+        </b-field>
+
         <b-field label="Rotation speed">
           <b-slider v-model="rotationSpeed" :min="0" :max="10" :step="0.5" aria-label="Rotation speed"></b-slider>
         </b-field>
@@ -105,6 +115,7 @@ import { debounce } from 'lodash-es';
 import { defineComponent, markRaw } from 'vue';
 import { Planet } from '../Planet/Planet';
 import { Game } from '../Game';
+import { REAL_PALETTES } from '../Planet/realPalettes';
 
 export default defineComponent({
   name: 'PlanetForm',
@@ -117,6 +128,7 @@ export default defineComponent({
       alpha: 0,
       openned: false,
       planetInstance: this.planet,
+      realPalettes: REAL_PALETTES,
       rotationSpeed: 1, // outside settings: changing it must not rebuild the planet
       settings: {
         terrainSeed: 'GIB GIB',
@@ -126,7 +138,9 @@ export default defineComponent({
         seaLevel: 25,
         coastDetail: 1,
         atmosphereDensity: 2,
-        atmosphereColor: 'blue'
+        atmosphereColor: 'blue',
+        realColors: false,
+        realPalette: 'earth'
       }
     }
   },
