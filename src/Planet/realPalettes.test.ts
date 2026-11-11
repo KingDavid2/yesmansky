@@ -14,3 +14,8 @@ test('gradient spreads colors over the 0-255 height range in order', () => {
   assert.deepEqual(g.map((c) => c.a), [0, 62, 124, 187, 249])
   assert.deepEqual([g[0].r, g[0].g, g[0].b], REAL_PALETTES.earth.colors[0])
 })
+
+test('fewer colors (sea color dropped) still span the full height range', () => {
+  const g = paletteGradient(REAL_PALETTES.earth.colors.slice(1))
+  assert.deepEqual(g.map((c) => c.a), [0, 83, 166, 249])
+})

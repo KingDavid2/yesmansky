@@ -52,7 +52,11 @@
           </b-slider>
         </b-field>
 
-        <b-field label="Sea level">
+        <b-field>
+          <b-checkbox v-model="settings.water">Seas</b-checkbox>
+        </b-field>
+
+        <b-field label="Sea level" v-if="settings.water">
           <b-slider v-model="settings.seaLevel"></b-slider>
         </b-field>
 
@@ -136,6 +140,7 @@ export default defineComponent({
         landMassSize: 80,
         roughness: 1,
         seaLevel: 25,
+        water: true,
         coastDetail: 1,
         atmosphereDensity: 2,
         atmosphereColor: 'blue',

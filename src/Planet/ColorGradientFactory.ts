@@ -12,17 +12,17 @@ type colorGradient = {
  * Generate color pallets based in given seed
  */
 class ColorGradientFactory {
-  static generateGradient(seed, realPalette?: string): Array<rgba> {
-    if (realPalette && REAL_PALETTES[realPalette]) {
-      return paletteGradient(REAL_PALETTES[realPalette].colors)
-    }
-    const noise3D = makeNoise3D(seed)
-    return this.generatePallete(noise3D)
+  static generateGradient(seed, realPalette?: string, seas = true): Array<rgba> {
+    const colors = realPalette && REAL_PALETTES[realPalette]
+      ? REAL_PALETTES[realPalette].colors
+      : this.choosePallete(makeNoise3D(seed))
+    // First color is the sea; dry planets use only the land colors
+    return paletteGradient(seas ? colors : colors.slice(1))
   }
 
-  protected static generatePallete (noise3D: (x: number, y: number, z: number) => number): Array<rgba> {
+  protected static choosePallete (noise3D: (x: number, y: number, z: number) => number) {
     const chosenPallet = colorPallets.length / 2 + Math.round(noise3D(23, 23, 23) * colorPallets.length * 0.5)
-    return paletteGradient(colorPallets[chosenPallet])
+    return colorPallets[chosenPallet]
   }
 }
 

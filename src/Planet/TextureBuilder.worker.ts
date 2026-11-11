@@ -19,7 +19,7 @@ type BuiltTextures = {
 }
 
 ctx.addEventListener("message", async (event) => {
-  const result = await _buildTextures(...(event.data as [number, NoiseSettings, Uint8ClampedArray, Uint8ClampedArray, Uint8ClampedArray]))
+  const result = await _buildTextures(...(event.data as [number, NoiseSettings, Uint8ClampedArray, Uint8ClampedArray, Uint8ClampedArray, boolean]))
   ctx.postMessage(result)
 });
 
@@ -31,7 +31,8 @@ const _buildTextures = async (
   noiseSettings: NoiseSettings,
   heightData: Uint8ClampedArray,
   specularData: Uint8ClampedArray,
-  diffuseData: Uint8ClampedArray
+  diffuseData: Uint8ClampedArray,
+  water: boolean
 ): Promise<BuiltTextures> => {
   const settings = noiseSettings
 
@@ -76,8 +77,10 @@ const _buildTextures = async (
 
     value = Math.max(value * 128 + 128, 255 * settings[0].min)
     value = Math.round(normalize(value, 255 * settings[0].min, 255) * 255)
-    value = sharpenCoast(Math.min(value, 255))
-    if (value <= 1) {
+    value = Math.min(value, 255)
+    // Dry planets: continuous terrain, no shore step, no shiny sea
+    if (water) value = sharpenCoast(value)
+    if (water && value <= 1) {
       heightData[a] = heightData[a + 1] = heightData[a + 2] = 0
       specularData[a] = specularData[a + 1] = specularData[a + 2] = 100
     } else {

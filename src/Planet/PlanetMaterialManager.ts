@@ -170,7 +170,8 @@ class PlanetMaterialManager {
 
     const colorGradient = ColorGradientFactory.generateGradient(
       hashStringToInt(this.options.terrainSeed),
-      this.options.realColors ? this.options.realPalette : undefined
+      this.options.realColors ? this.options.realPalette : undefined,
+      this.options.water !== false
     )
 
     const sphereNormalTexture = new Image();
@@ -194,7 +195,7 @@ class PlanetMaterialManager {
     diffuseMapCtx.fillRect(0, 0, 256, 5);
     const diffuseMapImage = diffuseMapCtx.getImageData(0, 0, resolution, resolution)
 
-    const { heightDataResult, specularDataResult, diffuseDataResult } = await TextureBuilder.buildTextures(hashStringToInt(this.options.terrainSeed), this._noiseSettings, heightMapImage, specularMapImage, diffuseMapImage)
+    const { heightDataResult, specularDataResult, diffuseDataResult } = await TextureBuilder.buildTextures(hashStringToInt(this.options.terrainSeed), this._noiseSettings, heightMapImage, specularMapImage, diffuseMapImage, this.options.water !== false)
 
     heightMapCtx.putImageData(heightMapImage, 0, 0);
     specularMapCtx.putImageData(specularMapImage, 0, 0);

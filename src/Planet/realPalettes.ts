@@ -16,6 +16,6 @@ export const REAL_PALETTES: Record<string, { label: string, colors: RGB[] }> = {
   titan: { label: 'Titan', colors: [[30, 30, 40], [120, 85, 40], [160, 115, 55], [190, 145, 80], [210, 175, 110]] },
 }
 
-/** Spreads colors evenly over the 0-255 height range as gradient stops */
+/** Spreads colors evenly over the 0-249 height range as gradient stops */
 export const paletteGradient = (colors: ArrayLike<number | string>[]): rgba[] =>
-  Array.from(colors, (c, i) => ({ r: +c[0], g: +c[1], b: +c[2], a: Math.round(62.2 * i) }))
+  Array.from(colors, (c, i) => ({ r: +c[0], g: +c[1], b: +c[2], a: Math.round((248.8 * i) / (colors.length - 1)) }))

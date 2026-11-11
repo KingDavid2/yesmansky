@@ -28,3 +28,8 @@ test('first layer keeps sea level threshold with detail enabled', () => {
   const layers = buildNoiseSettings({ ...base, roughness: 3, coastDetail: 2 })
   assert.equal(layers[0].min, 0.25)
 })
+
+test('no water ignores sea level so terrain is not clamped flat', () => {
+  const layers = buildNoiseSettings({ ...base, roughness: 3, coastDetail: 1, water: false })
+  layers.forEach((l) => assert.equal(l.min, 0))
+})

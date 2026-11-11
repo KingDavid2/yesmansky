@@ -1,13 +1,13 @@
 import type { NoiseSettings, PlanetOptions } from './types'
 
-type NoiseOptions = Pick<PlanetOptions, 'landMassSize' | 'roughness' | 'seaLevel' | 'coastDetail'>
+type NoiseOptions = Pick<PlanetOptions, 'landMassSize' | 'roughness' | 'seaLevel' | 'coastDetail' | 'water'>
 
 /**
  * Builds the noise layers used by the texture worker.
- * The first layer's `min` sets the sea level threshold.
+ * The first layer's `min` sets the sea level threshold (0 when there is no water).
  */
 export const buildNoiseSettings = (options: NoiseOptions): NoiseSettings => {
-  const min = options.seaLevel * 0.01
+  const min = options.water === false ? 0 : options.seaLevel * 0.01
   const layers: NoiseSettings = [
     { shift: 5, passes: 14, strength: 0.65, roughness: 2.1 - options.landMassSize * 0.02, resistance: 0.6, min, hard: true }
   ]

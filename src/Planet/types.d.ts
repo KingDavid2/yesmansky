@@ -4,6 +4,7 @@ type PlanetOptions = {
   landMassSize: number,
   roughness: number,
   seaLevel: number,
+  water?: boolean, // false = dry planet: no sea, seaLevel ignored
   coastDetail: number,
   atmosphereDensity: number,
   atmosphereColor: "blue" | "orange" | "white" | "green" | "purple",
