@@ -41,6 +41,8 @@ export default defineComponent({
     this.game = window.game = markRaw(new Game(view)) // Instantiate game
     this.planet = markRaw(window.game.planet)
 
+    // Skip intro blur on first click (Hello hides its message the same way)
+    window.addEventListener('pointerdown', () => { this.canvasBlur = 0 }, { once: true })
     setTimeout(() => {
       this.unblur()
     }, 4000);
