@@ -56,6 +56,15 @@
           <b-slider v-model="settings.seaLevel"></b-slider>
         </b-field>
 
+        <b-field label="Coast detail">
+          <b-slider v-model="settings.coastDetail" :min="0" :max="3" aria-label="Coast detail" :tooltip="false">
+            <b-slider-tick :value="0">None</b-slider-tick>
+            <b-slider-tick :value="1">Low</b-slider-tick>
+            <b-slider-tick :value="2">Medium</b-slider-tick>
+            <b-slider-tick :value="3">High</b-slider-tick>
+          </b-slider>
+        </b-field>
+
         <label class="label is-medium has-text-warning">Atmosphere</label>
         <b-field label="Density">
           <section>
@@ -110,6 +119,7 @@ export default defineComponent({
         landMassSize: 80,
         roughness: 1,
         seaLevel: 25,
+        coastDetail: 1,
         atmosphereDensity: 2,
         atmosphereColor: 'blue'
       }
@@ -151,6 +161,7 @@ export default defineComponent({
       this.settings.landMassSize = Math.round(Math.random()*70+10)
       this.settings.roughness = Math.round(Math.random()*4)
       this.settings.seaLevel = Math.round(Math.random()*55)
+      this.settings.coastDetail = Math.round(Math.random()*3)
       this.settings.atmosphereDensity = Math.round(Math.random()*4)
       this.settings.atmosphereColor = possibleAtmospheres[Math.floor(Math.random()*possibleAtmospheres.length)]
     },

@@ -4,6 +4,7 @@ import { TextureBuilder } from './TextureBuilder'
 import { ColorGradientFactory } from './ColorGradientFactory'
 import { NoiseSettings, PlanetOptions } from './types'
 import { convolute } from '../Filters/convolute'
+import { buildNoiseSettings } from './noiseSettings'
 
 const hashStringToInt = (s: string) => {
   return s.split("").reduce(function (a, b) { a = ((a << 5) - a) + b.charCodeAt(0); return a & a }, 0);
@@ -37,16 +38,7 @@ class PlanetMaterialManager {
     this.name = name
     this.scene = scene
     this.options = options
-    this._noiseSettings = [
-      { "shift": 5, "passes": 14, "strength": 0.65, "roughness": 2.1 - this.options.landMassSize * 0.02, "resistance": 0.6, "min": options.seaLevel * 0.01, "hard": true }
-    ]
-
-    if (options.roughness > 1) {
-      this._noiseSettings.unshift({ shift: 18, passes: 15, strength: 0.45, roughness: 0.3, resistance: 0.65, min: options.seaLevel * 0.01, hard: true })
-    }
-    if (options.roughness > 2) {
-      this._noiseSettings.unshift({ shift: 0, passes: 10, strength: 0.8, roughness: 0.6, resistance: 0.70, min: options.seaLevel * 0.01, hard: true })
-    }
+    this._noiseSettings = buildNoiseSettings(options)
   }
 
   get raw(): BABYLON.StandardMaterial {

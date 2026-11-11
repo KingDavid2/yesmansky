@@ -4,6 +4,7 @@ type PlanetOptions = {
   landMassSize: number,
   roughness: number,
   seaLevel: number,
+  coastDetail: number,
   atmosphereDensity: number,
   atmosphereColor: "blue" | "orange" | "white" | "green" | "purple",
   meshOptions: { diameter: number, diameterX: number, subdivisions: number }

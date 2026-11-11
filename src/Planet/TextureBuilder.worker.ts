@@ -6,6 +6,8 @@
 
 import { makeNoise3D } from 'open-simplex-noise'
 import { NoiseSettings } from './types'
+import { sharpenCoast } from './coastline'
+import { cubeMapPosition } from './cubeMap'
 const ctx: Worker = self as any;
 
 const normalize = (val, min, max) => ((val - min) / (max - min))
@@ -38,23 +40,18 @@ const _buildTextures = async (
   const numberOfPixels = heightData.length / 4
   const colorGradientValues = diffuseData.slice(0, 256 * 4)
 
-  const HD_RES = numberOfPixels > 1000*1000
+  const width = Math.sqrt(numberOfPixels)
 
   for (let i = 0; i < numberOfPixels; i++) {
     const a = i * 4
-    let [r, g, b] = [
+    // Exact float position on cube faces; 8-bit normal map only for seam padding
+    let [r, g, b] = cubeMapPosition(i % width, Math.floor(i / width), width, width) ?? [
       heightData[a],
       heightData[a + 1],
       heightData[a + 2]
     ]
     if (r + g + b === 0) {
       continue
-    }
-
-    if (HD_RES) {
-      const minibump = Math.random() * 1.5
-      r += minibump
-      g += minibump
     }
 
     let value = 0
@@ -79,7 +76,7 @@ const _buildTextures = async (
 
     value = Math.max(value * 128 + 128, 255 * settings[0].min)
     value = Math.round(normalize(value, 255 * settings[0].min, 255) * 255)
-    value = Math.min(value, 255)
+    value = sharpenCoast(Math.min(value, 255))
     if (value <= 1) {
       heightData[a] = heightData[a + 1] = heightData[a + 2] = 0
       specularData[a] = specularData[a + 1] = specularData[a + 2] = 100
