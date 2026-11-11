@@ -24,6 +24,8 @@ export default defineComponent({
     }
   },
   mounted: function () {
+    // Hero has pointer-events: none, so listen on window for any click
+    window.addEventListener('pointerdown', () => { this.alpha = 0 }, { once: true })
     setTimeout(() => {
       this.fadeOut()
     }, 4000);
