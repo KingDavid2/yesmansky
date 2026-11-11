@@ -13,6 +13,7 @@ class Game {
   camera: BABYLON.ArcRotateCamera
   light: BABYLON.Light
   planet: Planet
+  rotationSpeed = 1 // multiplier of the base spin, 0 = stopped
 
   constructor(el: HTMLCanvasElement) {
     const engineOptions = {
@@ -54,8 +55,8 @@ class Game {
 
   render() {
     if (this.planet) {
-      this.planet.rotateAround(BABYLON.Vector3.Zero(), new BABYLON.Vector3(0, 1, 0), 0.0001)
-      this.planet.mesh.atmosphereMesh.rotateAround(BABYLON.Vector3.Zero(), new BABYLON.Vector3(0, 1, 0), 0.0003)
+      this.planet.rotateAround(BABYLON.Vector3.Zero(), new BABYLON.Vector3(0, 1, 0), 0.0001 * this.rotationSpeed)
+      this.planet.mesh.atmosphereMesh.rotateAround(BABYLON.Vector3.Zero(), new BABYLON.Vector3(0, 1, 0), 0.0003 * this.rotationSpeed)
     }
     this.scene.render();
   }

@@ -65,6 +65,10 @@
           </b-slider>
         </b-field>
 
+        <b-field label="Rotation speed">
+          <b-slider v-model="rotationSpeed" :min="0" :max="10" :step="0.5" aria-label="Rotation speed"></b-slider>
+        </b-field>
+
         <label class="label is-medium has-text-warning">Atmosphere</label>
         <b-field label="Density">
           <section>
@@ -113,6 +117,7 @@ export default defineComponent({
       alpha: 0,
       openned: false,
       planetInstance: this.planet,
+      rotationSpeed: 1, // outside settings: changing it must not rebuild the planet
       settings: {
         terrainSeed: 'GIB GIB',
         type: 'terra',
@@ -134,6 +139,9 @@ export default defineComponent({
     }, 4000);
   },
   watch: {
+    rotationSpeed (value) {
+      this.game.rotationSpeed = value
+    },
     settings: {
       handler (newSettings) {
         this.rebuildPlanet(newSettings)
