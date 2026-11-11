@@ -1,5 +1,6 @@
 import * as BABYLON from '@babylonjs/core/Legacy/legacy'
 import { Vector3 } from '@babylonjs/core/Maths/math.vector'
+import { CUBE_PAD } from './cubeMap'
 
 type PlanetMeshOptions = { subdivisions?: number }
 
@@ -110,8 +111,9 @@ class PlanetMesh extends BABYLON.TransformNode {
 
     for (let i = 0; i < numberOfVertices; i++) {
       const a = i*2
-      uvs[a] = (uvs[a] + cubemapTile.x) / 4
-      uvs[a + 1] = (uvs[a + 1] + cubemapTile.y) / 3
+      // Inset by CUBE_PAD so sampling stays inside this face's tile
+      uvs[a] = (CUBE_PAD + uvs[a] * (1 - 2 * CUBE_PAD) + cubemapTile.x) / 4
+      uvs[a + 1] = (CUBE_PAD + uvs[a + 1] * (1 - 2 * CUBE_PAD) + cubemapTile.y) / 3
     }
     face.setVerticesData(BABYLON.VertexBuffer.UVKind, uvs)
   }

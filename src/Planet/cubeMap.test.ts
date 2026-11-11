@@ -2,7 +2,7 @@ import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import { inflateSync } from 'node:zlib'
-import { cubeMapPosition } from './cubeMap.ts'
+import { cubeMapPosition, CUBE_PAD } from './cubeMap.ts'
 
 test('face centers map to cube axes', () => {
   const N = 1200 // divisible by 4 and 3 so tile centers land on pixels
@@ -41,6 +41,17 @@ test('matches planetObjectSpaceNormal.png within 8-bit rounding', () => {
     }
   }
   assert.ok(checked > 40000)
+})
+
+test('padding continues the neighbor face so edges filter seamlessly', () => {
+  const N = 2048, tileW = N / 4, y = Math.floor(N / 2) // center row of the middle band
+  const padPx = Math.round(CUBE_PAD * tileW)
+  for (let k = 0; k < padPx; k++) {
+    // k px past face (2,1)'s right edge vs k px inside face (3,1)'s left edge
+    const a = cubeMapPosition(3 * tileW - padPx + k, y, N, N, CUBE_PAD)
+    const b = cubeMapPosition(3 * tileW + padPx + k, y, N, N, CUBE_PAD)
+    a.forEach((v, i) => assert.ok(Math.abs(v - b[i]) < 1, `k=${k}: ${a} vs ${b}`))
+  }
 })
 
 /** Minimal PNG decoder: 8-bit RGB, non-interlaced (enough for the normal map asset) */

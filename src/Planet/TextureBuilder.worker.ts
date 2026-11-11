@@ -7,7 +7,7 @@
 import { makeNoise3D } from 'open-simplex-noise'
 import { NoiseSettings } from './types'
 import { sharpenCoast } from './coastline'
-import { cubeMapPosition } from './cubeMap'
+import { cubeMapPosition, CUBE_PAD } from './cubeMap'
 const ctx: Worker = self as any;
 
 const normalize = (val, min, max) => ((val - min) / (max - min))
@@ -44,8 +44,8 @@ const _buildTextures = async (
 
   for (let i = 0; i < numberOfPixels; i++) {
     const a = i * 4
-    // Exact float position on cube faces; 8-bit normal map only for seam padding
-    let [r, g, b] = cubeMapPosition(i % width, Math.floor(i / width), width, width) ?? [
+    // Exact float position on cube faces (border = neighbor face); normal map only outside the cross
+    let [r, g, b] = cubeMapPosition(i % width, Math.floor(i / width), width, width, CUBE_PAD) ?? [
       heightData[a],
       heightData[a + 1],
       heightData[a + 2]
