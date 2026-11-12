@@ -3,9 +3,11 @@ import { PlanetMesh } from './PlanetMesh'
 import { PlanetMaterialManager } from './PlanetMaterialManager'
 import { PlanetOptions } from './types'
 import { RingOptions, ringRadii, ringBands } from './rings'
+import { SatelliteOptions, satellitePosition, satelliteSurface } from './satellites'
 
 const RING_SEGMENTS = 128
 const RING_TEXTURE_SIZE = 256 // radial samples, inner → outer edge
+const SPIN_BASE = 0.5 // satellite self-spin rad/s at rotationSpeed 1
 
 /**
  * Extends TransformNode to make it like a native babylon mesh
@@ -23,6 +25,10 @@ class Planet extends BABYLON.TransformNode {
   scene: BABYLON.Scene
   options: PlanetOptions
   ringMeshes: BABYLON.Mesh[] = []
+  satellites: SatelliteOptions[] = []
+  satelliteMeshes: BABYLON.Mesh[] = []
+  satelliteTime = 0 // lives here so rebuilding meshes (slider edits) keeps orbit phase
+  satelliteObserver: BABYLON.Observer<BABYLON.Scene> | null = null
 
   constructor(name: string = 'planet', options: any, scene: BABYLON.Scene) {
     super(name)
@@ -50,6 +56,8 @@ class Planet extends BABYLON.TransformNode {
     this.mesh.atmosphereMaterial = this.materialManager.rawAtmosphere
 
     this.setRings(this.options.rings ?? [])
+    this.setSatellites(this.options.satellites ?? [])
+    this.satelliteObserver = scene.onBeforeRenderObservable.add(() => this.animateSatellites())
 
     this.setInspectableProperties()
     this.setDisposeProcess()
@@ -95,6 +103,49 @@ class Planet extends BABYLON.TransformNode {
     const texture = BABYLON.RawTexture.CreateRGBATexture(data, 1, RING_TEXTURE_SIZE, this.scene)
     texture.wrapU = texture.wrapV = BABYLON.Texture.CLAMP_ADDRESSMODE
     return texture
+  }
+
+  /** Rebuilds satellite meshes. Not parented to this node, same reason as rings. */
+  setSatellites(satellites: SatelliteOptions[]) {
+    this.disposeSatellites()
+    this.satellites = satellites.map(s => ({ ...s }))
+    this.satelliteMeshes = this.satellites.map((sat, i) => {
+      const mesh = BABYLON.MeshBuilder.CreateSphere(`${this.name}Satellite${i}`, { diameter: 2, segments: 48, updatable: true }, this.scene)
+      const positions = mesh.getVerticesData(BABYLON.VertexBuffer.PositionKind)!
+      const tint = BABYLON.Color3.FromHexString(sat.color)
+      const colors: number[] = []
+      for (let v = 0; v < positions.length; v += 3) {
+        const { scale, shade } = satelliteSurface(i + 1, positions[v], positions[v + 1], positions[v + 2], sat.shape === 'irregular')
+        positions[v] *= scale; positions[v + 1] *= scale; positions[v + 2] *= scale
+        colors.push(Math.min(1, tint.r * shade), Math.min(1, tint.g * shade), Math.min(1, tint.b * shade), 1)
+      }
+      const normals: number[] = []
+      BABYLON.VertexData.ComputeNormals(positions, mesh.getIndices(), normals)
+      mesh.updateVerticesData(BABYLON.VertexBuffer.PositionKind, positions)
+      mesh.updateVerticesData(BABYLON.VertexBuffer.NormalKind, normals)
+      mesh.setVerticesData(BABYLON.VertexBuffer.ColorKind, colors)
+      mesh.scaling.setAll(sat.width / 2)
+      const material = new BABYLON.StandardMaterial(`${this.name}SatelliteMat${i}`, this.scene)
+      material.specularColor = BABYLON.Color3.Black()
+      mesh.material = material
+      return mesh
+    })
+    this.animateSatellites(0)
+  }
+
+  protected animateSatellites(dt = this.scene.getEngine().getDeltaTime() / 1000) {
+    this.satelliteTime += dt
+    this.satellites.forEach((sat, i) => {
+      const { x, y, z } = satellitePosition(sat, this.satelliteTime)
+      const mesh = this.satelliteMeshes[i]
+      mesh.position.set(x, y, z)
+      mesh.rotation.y += sat.rotationSpeed * SPIN_BASE * dt
+    })
+  }
+
+  protected disposeSatellites() {
+    this.satelliteMeshes.forEach(mesh => mesh.dispose(false, true))
+    this.satelliteMeshes = []
   }
 
   protected disposeRings() {
@@ -146,6 +197,8 @@ class Planet extends BABYLON.TransformNode {
     this.onDisposeObservable.add(() => {
       this.materialManager.dispose()
       this.disposeRings()
+      this.disposeSatellites()
+      this.scene.onBeforeRenderObservable.remove(this.satelliteObserver)
     })
   }
 }

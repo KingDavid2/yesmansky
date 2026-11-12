@@ -1,4 +1,5 @@
 import { RingOptions } from './rings'
+import { SatelliteOptions } from './satellites'
 
 type PlanetOptions = {
   terrainSeed: string,
@@ -15,6 +16,7 @@ type PlanetOptions = {
   realColors?: boolean, // use realPalette instead of the seeded random one
   realPalette?: string, // key of REAL_PALETTES
   rings?: RingOptions[], // empty/undefined = no rings
+  satellites?: SatelliteOptions[], // empty/undefined = no satellites
   meshOptions: { diameter: number, diameterX: number, subdivisions: number }
 }
 

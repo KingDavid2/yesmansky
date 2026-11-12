@@ -149,6 +149,46 @@
             </div>
             </template>
           </b-tab-item>
+
+          <b-tab-item label="Satellites">
+            <b-field>
+              <b-checkbox v-model="satellitesEnabled">Satellites</b-checkbox>
+            </b-field>
+
+            <template v-if="satellitesEnabled">
+            <b-field label="Satellite count">
+              <b-slider v-model="satelliteCount" :min="1" :max="5" aria-label="Satellite count"></b-slider>
+            </b-field>
+
+            <div v-for="(sat, i) in satellites" :key="i">
+              <label class="label has-text-warning">Satellite {{ i + 1 }}</label>
+              <b-field label="Width">
+                <b-slider v-model="sat.width" :min="0.02" :max="0.5" :step="0.01" :aria-label="`Satellite ${i + 1} width`"></b-slider>
+              </b-field>
+              <b-field label="Gap from planet">
+                <b-slider v-model="sat.gap" :min="0.1" :max="3" :step="0.05" :aria-label="`Satellite ${i + 1} gap`"></b-slider>
+              </b-field>
+              <b-field label="Color">
+                <input type="color" v-model="sat.color" :aria-label="`Satellite ${i + 1} color`">
+              </b-field>
+              <b-field label="Angle">
+                <b-slider v-model="sat.angle" :min="-90" :max="90" :aria-label="`Satellite ${i + 1} angle`"></b-slider>
+              </b-field>
+              <b-field label="Shape">
+                <b-select v-model="sat.shape" expanded>
+                  <option value="regular">Regular</option>
+                  <option value="irregular">Irregular</option>
+                </b-select>
+              </b-field>
+              <b-field label="Rotation speed">
+                <b-slider v-model="sat.rotationSpeed" :min="0" :max="10" :step="0.5" :aria-label="`Satellite ${i + 1} rotation speed`"></b-slider>
+              </b-field>
+              <b-field label="Translation speed">
+                <b-slider v-model="sat.translationSpeed" :min="0" :max="10" :step="0.5" :aria-label="`Satellite ${i + 1} translation speed`"></b-slider>
+              </b-field>
+            </div>
+            </template>
+          </b-tab-item>
         </b-tabs>
       </div>
       <footer class="card-footer">
@@ -182,6 +222,9 @@ export default defineComponent({
       ringsEnabled: false, // rings also outside settings: updated live, no rebuild
       ringCount: 1,
       rings: [{ width: 0.3, gap: 0.2, angle: 0, color: '#c8a878' }],
+      satellitesEnabled: false, // live like rings, no rebuild
+      satelliteCount: 1,
+      satellites: [{ width: 0.15, gap: 1, angle: 10, color: '#aaaaaa', shape: 'irregular', rotationSpeed: 1, translationSpeed: 1 }],
       settings: {
         terrainSeed: 'GIB GIB',
         type: 'terra',
@@ -214,6 +257,9 @@ export default defineComponent({
     },
     activeRings () {
       return this.ringsEnabled ? this.rings : []
+    },
+    activeSatellites () {
+      return this.satellitesEnabled ? this.satellites : []
     }
   },
   watch: {
@@ -232,6 +278,18 @@ export default defineComponent({
     activeRings: {
       handler (rings) {
         this.planetInstance.setRings(rings)
+      },
+      deep: true
+    },
+    satelliteCount (count) {
+      while (this.satellites.length < count) {
+        this.satellites.push({ width: 0.1, gap: 0.5 + this.satellites.length * 0.6, angle: 0, color: '#999999', shape: 'irregular', rotationSpeed: 1, translationSpeed: 1 })
+      }
+      this.satellites.length = count
+    },
+    activeSatellites: {
+      handler (satellites) {
+        this.planetInstance.setSatellites(satellites)
       },
       deep: true
     },
@@ -279,7 +337,7 @@ export default defineComponent({
     rebuildPlanet: function (newSettings) {
       console.log('rebuilding planet...');
       this.planetInstance.dispose()
-      this.game.planet = this.planetInstance = markRaw(new Planet('planet', { ...newSettings, rings: this.activeRings }, this.game.scene))
+      this.game.planet = this.planetInstance = markRaw(new Planet('planet', { ...newSettings, rings: this.activeRings, satellites: this.activeSatellites }, this.game.scene))
     }
   }
 })
