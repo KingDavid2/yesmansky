@@ -285,5 +285,10 @@ export default defineComponent({
 })
 </script>
 
-<style>
+<style scoped>
+/* Settings grew past the viewport (rings); scroll inside the card, header/footer stay put */
+.card-content {
+  max-height: calc(100vh - 14rem);
+  overflow-y: auto;
+}
 </style>
