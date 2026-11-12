@@ -183,6 +183,15 @@
             </div>
             </template>
           </b-tab-item>
+
+          <b-tab-item label="Space">
+            <b-field>
+              <b-checkbox v-model="backgroundEnabled">Starry background</b-checkbox>
+            </b-field>
+            <b-field v-if="backgroundEnabled" label="Number of stars">
+              <b-slider v-model="starCount" :min="100" :max="5000" :step="100" lazy aria-label="Number of stars"></b-slider>
+            </b-field>
+          </b-tab-item>
         </b-tabs>
       </div>
       <footer class="card-footer">
@@ -218,6 +227,8 @@ export default defineComponent({
       ringsEnabled: false, // rings also outside settings: updated live, no rebuild
       ringCount: 1,
       rings: [{ width: 0.3, gap: 0.2, angle: 0, color: '#c8a878' }],
+      backgroundEnabled: false, // scene-level, no rebuild
+      starCount: 1500,
       satellitesEnabled: false, // live like rings, no rebuild
       satelliteCount: 1,
       satellites: [{ width: 0.15, gap: 1, angle: 10, color: '#aaaaaa', shape: 'irregular', rotationSpeed: 1, translationSpeed: 1 }],
@@ -267,6 +278,12 @@ export default defineComponent({
     rotationSpeed (value) {
       this.game.rotationSpeed = value
     },
+    backgroundEnabled (value) {
+      this.game.setBackground(value)
+    },
+    starCount (value) {
+      this.game.setStarCount(value)
+    },
     ringCount (count) {
       while (this.rings.length < count) this.rings.push({ width: 0.3, gap: 0.05, angle: 0, color: '#a08060' })
       this.rings.length = count
@@ -298,8 +315,8 @@ export default defineComponent({
   },
   methods: {
     save: function () {
-      const { settings, rotationSpeed, ringsEnabled, rings, satellitesEnabled, satellites } = this
-      const json = JSON.stringify({ settings, rotationSpeed, ringsEnabled, rings, satellitesEnabled, satellites }, null, 2)
+      const { settings, rotationSpeed, ringsEnabled, rings, satellitesEnabled, satellites, backgroundEnabled, starCount } = this
+      const json = JSON.stringify({ settings, rotationSpeed, ringsEnabled, rings, satellitesEnabled, satellites, backgroundEnabled, starCount }, null, 2)
       const link = document.createElement('a')
       link.href = URL.createObjectURL(new Blob([json], { type: 'application/json' }))
       link.download = `${settings.terrainSeed || 'planet'}.json`
@@ -333,6 +350,8 @@ export default defineComponent({
       }
       this.ringsEnabled = !!saved.ringsEnabled
       this.satellitesEnabled = !!saved.satellitesEnabled
+      this.backgroundEnabled = !!saved.backgroundEnabled
+      this.starCount = saved.starCount ?? 1500
     },
     setRandomSeed: function () {
       const baseName = ['Planet ', 'Moon ', 'Rogue ', 'Exo ', 'Dwarf ', 'Earth ', 'Hypothetical ', '', '', '']
