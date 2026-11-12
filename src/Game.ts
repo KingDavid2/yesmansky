@@ -7,7 +7,7 @@ import { STAR_CLASSES, StarClass, SYSTEM_SCALE, starLight, starOrbitPosition } f
 
 const STAR_COUNT = 1500 // default
 const STAR_RADIUS = 500
-const SUN_DIR = new BABYLON.Vector3(0.5, 1, 0).normalize() // same side as the ambient light
+const SUN_DIR = new BABYLON.Vector3(0.3, -0.43, -0.913).normalize() // behind the planet, ~19° left of the default camera view so the star is in frame
 const SUN_DISTANCE = 200
 const AMBIENT_WITH_STAR = 0.15 // keep night side faintly visible
 const SYSTEM_STAR_SIZE = 4 // ponytail: not to scale, a real star would be a dot at 20 units/AU
