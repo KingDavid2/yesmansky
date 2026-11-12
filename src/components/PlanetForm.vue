@@ -11,7 +11,6 @@
       </header>
 
       <div class="card-content" v-if="openned">
-        <label class="label is-medium has-text-warning">Planet</label>
         <b-field label="Name (seed)" expanded>
           <b-field>
             <b-input v-model="settings.terrainSeed" expanded placeholder="Seed..."></b-input>
@@ -21,107 +20,102 @@
           </b-field>
         </b-field>
 
-        <b-field>
-          <b-field label="Planet type" expanded>
-            <div class="block">
-              <b-radio v-model="settings.type"
-                name="type"
-                native-value="terra">
-                Terrestrial
-              </b-radio>
-              <b-radio v-model="settings.type"
-                name="type"
-                native-value="gas">
-                Gas
-              </b-radio>
-            </div>
-          </b-field>
-        </b-field>
-
-        <template v-if="settings.type === 'terra'">
-        <b-field label="Landmass scale">
-          <b-slider v-model="settings.landMassSize"></b-slider>
-        </b-field>
-
-        <b-field label="Roughness">
-          <b-slider v-model="settings.roughness" :min="0" :max="3" :value="2" aria-label="Roughness" :tooltip="false">
-            <b-slider-tick :value="0">Low</b-slider-tick>
-            <b-slider-tick :value="1">Medium</b-slider-tick>
-            <b-slider-tick :value="2">High</b-slider-tick>
-            <b-slider-tick :value="3">Very High</b-slider-tick>
-          </b-slider>
-        </b-field>
-
-        <b-field>
-          <b-checkbox v-model="settings.water">Seas</b-checkbox>
-        </b-field>
-
-        <b-field label="Sea level">
-          <b-slider v-model="settings.seaLevel"></b-slider>
-        </b-field>
-
-        <b-field label="Coast detail">
-          <b-slider v-model="settings.coastDetail" :min="0" :max="3" aria-label="Coast detail" :tooltip="false">
-            <b-slider-tick :value="0">None</b-slider-tick>
-            <b-slider-tick :value="1">Low</b-slider-tick>
-            <b-slider-tick :value="2">Medium</b-slider-tick>
-            <b-slider-tick :value="3">High</b-slider-tick>
-          </b-slider>
-        </b-field>
-        </template>
-
-        <template v-else>
-        <b-field label="Bands">
-          <b-slider v-model="settings.bands" :min="4" :max="24" aria-label="Bands"></b-slider>
-        </b-field>
-
-        <b-field label="Turbulence">
-          <b-slider v-model="settings.turbulence" :min="0" :max="3" aria-label="Turbulence" :tooltip="false">
-            <b-slider-tick :value="0">None</b-slider-tick>
-            <b-slider-tick :value="1">Low</b-slider-tick>
-            <b-slider-tick :value="2">Medium</b-slider-tick>
-            <b-slider-tick :value="3">High</b-slider-tick>
-          </b-slider>
-        </b-field>
-        </template>
-
-        <b-field>
-          <b-checkbox v-model="settings.realColors">Real universe colors</b-checkbox>
-        </b-field>
-
-        <b-field label="Color palette" v-if="settings.realColors">
-          <b-select v-model="settings.realPalette" expanded>
-            <option v-for="(palette, key) in palettesForType" :key="key" :value="key">{{ palette.label }}</option>
-          </b-select>
-        </b-field>
-
-        <b-field label="Rotation speed">
-          <b-slider v-model="rotationSpeed" :min="0" :max="10" :step="0.5" aria-label="Rotation speed"></b-slider>
-        </b-field>
-
-        <label class="label is-medium has-text-warning">Atmosphere</label>
-        <b-field label="Density">
-          <section>
-            <b-slider v-model="settings.atmosphereDensity" :min="0" :max="3" :value="2" aria-label="Roughness" :tooltip="false">
-              <b-slider-tick :value="0"></b-slider-tick>
-              <b-slider-tick :value="1">Thin</b-slider-tick>
-              <b-slider-tick :value="2">Medium</b-slider-tick>
-              <b-slider-tick :value="3">Dense</b-slider-tick>
-            </b-slider>
-          </section>
-        </b-field>
-
-        <b-field label="Main composition">
-          <b-select v-model="settings.atmosphereColor" placeholder="Choose" expanded>
-            <option value="blue">Oxygen & Nitrogen</option>
-            <option value="orange">Carbon Dioxide</option>
-            <option value="white">Hydrogen</option>
-            <option value="green">Methane</option>
-            <option value="purple">Argon</option>
-          </b-select>
-        </b-field>
-
         <b-tabs>
+          <b-tab-item label="Planet">
+            <label class="label has-text-warning">General</label>
+            <b-field label="Planet type">
+              <div class="block">
+                <b-radio v-model="settings.type" name="type" native-value="terra">Terrestrial</b-radio>
+                <b-radio v-model="settings.type" name="type" native-value="gas">Gas</b-radio>
+              </div>
+            </b-field>
+
+            <template v-if="settings.type === 'terra'">
+            <label class="label has-text-warning">Terrain</label>
+            <b-field label="Landmass scale">
+              <b-slider v-model="settings.landMassSize"></b-slider>
+            </b-field>
+
+            <b-field label="Roughness">
+              <b-slider v-model="settings.roughness" :min="0" :max="3" :value="2" aria-label="Roughness" :tooltip="false">
+                <b-slider-tick :value="0">Low</b-slider-tick>
+                <b-slider-tick :value="1">Medium</b-slider-tick>
+                <b-slider-tick :value="2">High</b-slider-tick>
+                <b-slider-tick :value="3">Very High</b-slider-tick>
+              </b-slider>
+            </b-field>
+
+            <b-field>
+              <b-checkbox v-model="settings.water">Seas</b-checkbox>
+            </b-field>
+
+            <b-field label="Sea level">
+              <b-slider v-model="settings.seaLevel"></b-slider>
+            </b-field>
+
+            <b-field label="Coast detail">
+              <b-slider v-model="settings.coastDetail" :min="0" :max="3" aria-label="Coast detail" :tooltip="false">
+                <b-slider-tick :value="0">None</b-slider-tick>
+                <b-slider-tick :value="1">Low</b-slider-tick>
+                <b-slider-tick :value="2">Medium</b-slider-tick>
+                <b-slider-tick :value="3">High</b-slider-tick>
+              </b-slider>
+            </b-field>
+            </template>
+
+            <template v-else>
+            <label class="label has-text-warning">Bands</label>
+            <b-field label="Band count">
+              <b-slider v-model="settings.bands" :min="4" :max="24" aria-label="Band count"></b-slider>
+            </b-field>
+
+            <b-field label="Turbulence">
+              <b-slider v-model="settings.turbulence" :min="0" :max="3" aria-label="Turbulence" :tooltip="false">
+                <b-slider-tick :value="0">None</b-slider-tick>
+                <b-slider-tick :value="1">Low</b-slider-tick>
+                <b-slider-tick :value="2">Medium</b-slider-tick>
+                <b-slider-tick :value="3">High</b-slider-tick>
+              </b-slider>
+            </b-field>
+            </template>
+
+            <label class="label has-text-warning">Colors</label>
+            <b-field>
+              <b-checkbox v-model="settings.realColors">Realistic colors</b-checkbox>
+            </b-field>
+
+            <b-field label="Color palette" v-if="settings.realColors">
+              <b-select v-model="settings.realPalette" expanded>
+                <option v-for="(palette, key) in palettesForType" :key="key" :value="key">{{ palette.label }}</option>
+              </b-select>
+            </b-field>
+
+            <label class="label has-text-warning">Atmosphere</label>
+            <b-field label="Density">
+              <b-slider v-model="settings.atmosphereDensity" :min="0" :max="3" :value="2" aria-label="Atmosphere density" :tooltip="false">
+                <b-slider-tick :value="0"></b-slider-tick>
+                <b-slider-tick :value="1">Thin</b-slider-tick>
+                <b-slider-tick :value="2">Medium</b-slider-tick>
+                <b-slider-tick :value="3">Dense</b-slider-tick>
+              </b-slider>
+            </b-field>
+
+            <b-field label="Main composition">
+              <b-select v-model="settings.atmosphereColor" placeholder="Choose" expanded>
+                <option value="blue">Oxygen & Nitrogen</option>
+                <option value="orange">Carbon Dioxide</option>
+                <option value="white">Hydrogen</option>
+                <option value="green">Methane</option>
+                <option value="purple">Argon</option>
+              </b-select>
+            </b-field>
+
+            <label class="label has-text-warning">Motion</label>
+            <b-field label="Rotation speed">
+              <b-slider v-model="rotationSpeed" :min="0" :max="10" :step="0.5" aria-label="Rotation speed"></b-slider>
+            </b-field>
+          </b-tab-item>
+
           <b-tab-item label="Rings">
             <b-field>
               <b-checkbox v-model="ringsEnabled">Rings</b-checkbox>
