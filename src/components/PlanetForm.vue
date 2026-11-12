@@ -192,7 +192,9 @@
         </b-tabs>
       </div>
       <footer class="card-footer">
-        <a v-on:click="save" class="card-footer-item button is-primary" disabled>Save</a>
+        <a v-on:click="save" class="card-footer-item button is-primary">Save</a>
+        <a v-on:click="$refs.loadInput.click()" class="card-footer-item button is-info">Load</a>
+        <input ref="loadInput" type="file" accept=".json,application/json" hidden v-on:change="load">
         <a v-on:click="setRandomSettings" class="card-footer-item button is-warning">Randomize</a>
         <a v-on:click="openned = !openned" class="card-footer-item button is-text">{{ openned ? 'Close' : 'Settings' }} </a>
       </footer>
@@ -302,11 +304,41 @@ export default defineComponent({
   },
   methods: {
     save: function () {
-      const saveContents = []
-      for (const key in this.settings) {
-        saveContents.push(this.settings[key])
+      const { settings, rotationSpeed, ringsEnabled, rings, satellitesEnabled, satellites } = this
+      const json = JSON.stringify({ settings, rotationSpeed, ringsEnabled, rings, satellitesEnabled, satellites }, null, 2)
+      const link = document.createElement('a')
+      link.href = URL.createObjectURL(new Blob([json], { type: 'application/json' }))
+      link.download = `${settings.terrainSeed || 'planet'}.json`
+      link.click()
+      URL.revokeObjectURL(link.href)
+    },
+    load: async function (event) {
+      const file = event.target.files[0]
+      event.target.value = '' // allow loading the same file twice
+      if (!file) return
+      let saved
+      try {
+        saved = JSON.parse(await file.text())
+      } catch {
+        this.$buefy.toast.open({ message: 'Invalid planet file', type: 'is-danger' })
+        return
       }
-      return saveContents.join('|')
+      if (!saved?.settings) {
+        this.$buefy.toast.open({ message: 'Invalid planet file', type: 'is-danger' })
+        return
+      }
+      Object.assign(this.settings, saved.settings)
+      this.rotationSpeed = saved.rotationSpeed ?? this.rotationSpeed
+      if (saved.rings?.length) {
+        this.rings = saved.rings
+        this.ringCount = saved.rings.length
+      }
+      if (saved.satellites?.length) {
+        this.satellites = saved.satellites
+        this.satelliteCount = saved.satellites.length
+      }
+      this.ringsEnabled = !!saved.ringsEnabled
+      this.satellitesEnabled = !!saved.satellitesEnabled
     },
     setRandomSeed: function () {
       const baseName = ['Planet ', 'Moon ', 'Rogue ', 'Exo ', 'Dwarf ', 'Earth ', 'Hypothetical ', '', '', '']
