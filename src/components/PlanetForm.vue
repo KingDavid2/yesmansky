@@ -191,6 +191,12 @@
             <b-field v-if="backgroundEnabled" label="Number of stars">
               <b-slider v-model="starCount" :min="100" :max="5000" :step="100" lazy aria-label="Number of stars"></b-slider>
             </b-field>
+            <b-field v-if="backgroundEnabled">
+              <b-checkbox v-model="nebula.enabled">Nebula</b-checkbox>
+            </b-field>
+            <b-field v-if="backgroundEnabled && nebula.enabled" label="Nebula intensity">
+              <b-slider v-model="nebula.intensity" :min="0.2" :max="2" :step="0.1" aria-label="Nebula intensity"></b-slider>
+            </b-field>
 
             <b-field>
               <b-checkbox v-model="star.enabled">Star</b-checkbox>
@@ -248,6 +254,7 @@ export default defineComponent({
       rings: [{ width: 0.3, gap: 0.2, angle: 0, color: '#c8a878' }],
       backgroundEnabled: false, // scene-level, no rebuild
       starCount: 1500,
+      nebula: { enabled: true, intensity: 1 }, // scene-level, no rebuild
       star: { enabled: false, starClass: 'G', distance: 1, systemView: false }, // scene-level, no rebuild
       starClasses: STAR_CLASSES,
       satellitesEnabled: false, // live like rings, no rebuild
@@ -305,6 +312,12 @@ export default defineComponent({
     starCount (value) {
       this.game.setStarCount(value)
     },
+    nebula: {
+      handler (value) {
+        this.game.setNebula(value)
+      },
+      deep: true
+    },
     star: {
       handler (value) {
         this.game.setStar(value)
@@ -342,8 +355,8 @@ export default defineComponent({
   },
   methods: {
     save: function () {
-      const { settings, rotationSpeed, ringsEnabled, rings, satellitesEnabled, satellites, backgroundEnabled, starCount, star } = this
-      const json = JSON.stringify({ settings, rotationSpeed, ringsEnabled, rings, satellitesEnabled, satellites, backgroundEnabled, starCount, star }, null, 2)
+      const { settings, rotationSpeed, ringsEnabled, rings, satellitesEnabled, satellites, backgroundEnabled, starCount, nebula, star } = this
+      const json = JSON.stringify({ settings, rotationSpeed, ringsEnabled, rings, satellitesEnabled, satellites, backgroundEnabled, starCount, nebula, star }, null, 2)
       const link = document.createElement('a')
       link.href = URL.createObjectURL(new Blob([json], { type: 'application/json' }))
       link.download = `${settings.terrainSeed || 'planet'}.json`
@@ -379,6 +392,7 @@ export default defineComponent({
       this.satellitesEnabled = !!saved.satellitesEnabled
       this.backgroundEnabled = !!saved.backgroundEnabled
       this.starCount = saved.starCount ?? 1500
+      Object.assign(this.nebula, { enabled: true, intensity: 1 }, saved.nebula)
       Object.assign(this.star, { enabled: false, systemView: false }, saved.star)
     },
     setRandomSeed: function () {

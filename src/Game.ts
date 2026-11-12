@@ -2,11 +2,12 @@ import * as BABYLON from '@babylonjs/core/Legacy/legacy';
 import localforage from 'localforage'
 import { Planet } from './Planet/Planet';
 import { HardwareInfo } from './Infrastructure/HardwareInfo';
-import { starField, twinkle } from './Space/stars';
+import { starField, twinkle, nebulaBlobs, nebulaPixels } from './Space/stars';
 import { STAR_CLASSES, StarClass, SYSTEM_SCALE, starLight, starOrbitPosition } from './Space/star';
 
 const STAR_COUNT = 1500 // default
 const STAR_RADIUS = 500
+const NEBULA_BLOBS = 60
 const SUN_DIR = new BABYLON.Vector3(0.3, -0.43, -0.913).normalize() // behind the planet, ~19° left of the default camera view so the star is in frame
 const SUN_DISTANCE = 200
 const AMBIENT_WITH_STAR = 0.15 // keep night side faintly visible
@@ -29,6 +30,8 @@ class Game {
   starCount = STAR_COUNT
   defaultClearColor: BABYLON.Color4
   stars?: { mesh: BABYLON.Mesh, field: ReturnType<typeof starField>, colors: Float32Array }
+  nebula?: BABYLON.Mesh
+  nebulaSettings = { enabled: true, intensity: 1 }
   sun?: { mesh: BABYLON.Mesh, material: BABYLON.StandardMaterial, light: BABYLON.DirectionalLight, glow: BABYLON.GlowLayer }
   starSettings?: StarSettings
   orbitLine?: BABYLON.LinesMesh
@@ -96,11 +99,23 @@ class Game {
     this.scene.render();
   }
 
-  /** Black sky with twinkling stars; off restores the default clear color. */
+  /** Black sky with nebula clouds and twinkling stars; off restores the default clear color. */
   setBackground(enabled: boolean) {
     this.scene.clearColor = enabled ? new BABYLON.Color4(0, 0, 0, 1) : this.defaultClearColor.clone()
     if (enabled && !this.stars) this.stars = this.createStars()
     this.stars?.mesh.setEnabled(enabled)
+    this.setNebula(this.nebulaSettings)
+  }
+
+  /** Nebula shows only with the starry background; intensity scales the cloud brightness. */
+  setNebula(settings: { enabled: boolean, intensity: number }) {
+    this.nebulaSettings = { ...settings }
+    const visible = settings.enabled && !!this.stars?.mesh.isEnabled()
+    if (visible && !this.nebula) this.nebula = this.createNebula()
+    if (!this.nebula) return
+    this.nebula.setEnabled(visible)
+    // emissiveColor is added to the texture, not multiplied: scale the texture level instead
+    ;(this.nebula.material as BABYLON.StandardMaterial).emissiveTexture!.level = settings.intensity
   }
 
   /** Rebuilds the star field; same seed keeps the first stars in place. */
@@ -194,6 +209,24 @@ class Game {
     return { mesh, material, light, glow }
   }
 
+  /** Gaussian-blurred green/blue/purple clouds on an equirect texture inside a big sphere. */
+  createNebula() {
+    const W = 2048, H = 1024
+    const pixels = nebulaPixels(nebulaBlobs(NEBULA_BLOBS, 2), W, H)
+    const texture = BABYLON.RawTexture.CreateRGBATexture(new Uint8Array(pixels.buffer), W, H, this.scene, false, false, BABYLON.Texture.BILINEAR_SAMPLINGMODE)
+    const mesh = BABYLON.MeshBuilder.CreateSphere('nebula', { diameter: STAR_RADIUS * 3.6, segments: 32, sideOrientation: BABYLON.Mesh.BACKSIDE }, this.scene)
+    const material = new BABYLON.StandardMaterial('nebulaMaterial', this.scene)
+    material.disableLighting = true
+    material.emissiveTexture = texture
+    material.diffuseColor = BABYLON.Color3.Black()
+    material.specularColor = BABYLON.Color3.Black()
+    mesh.material = material
+    mesh.infiniteDistance = true
+    mesh.isPickable = false
+    mesh.alwaysSelectAsActiveMesh = true
+    return mesh
+  }
+
   createStars() {
     const field = starField(this.starCount, STAR_RADIUS, 1)
     const colors = new Float32Array(this.starCount * 4).fill(1)
@@ -207,6 +240,8 @@ class Game {
     material.pointSize = 2
     material.disableLighting = true
     material.emissiveColor = BABYLON.Color3.White()
+    material.alpha = 0.999 // enables blending; additive so dim stars brighten the nebula instead of punching dark squares in it
+    material.alphaMode = BABYLON.Engine.ALPHA_ADD
     mesh.material = material
     mesh.infiniteDistance = true
     mesh.isPickable = false
