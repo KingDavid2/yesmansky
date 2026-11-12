@@ -31,14 +31,14 @@
               </b-radio>
               <b-radio v-model="settings.type"
                 name="type"
-                native-value="gas"
-                disabled>
+                native-value="gas">
                 Gas
               </b-radio>
             </div>
           </b-field>
         </b-field>
 
+        <template v-if="settings.type === 'terra'">
         <b-field label="Landmass scale">
           <b-slider v-model="settings.landMassSize"></b-slider>
         </b-field>
@@ -68,6 +68,22 @@
             <b-slider-tick :value="3">High</b-slider-tick>
           </b-slider>
         </b-field>
+        </template>
+
+        <template v-else>
+        <b-field label="Bands">
+          <b-slider v-model="settings.bands" :min="4" :max="24" aria-label="Bands"></b-slider>
+        </b-field>
+
+        <b-field label="Turbulence">
+          <b-slider v-model="settings.turbulence" :min="0" :max="3" aria-label="Turbulence" :tooltip="false">
+            <b-slider-tick :value="0">None</b-slider-tick>
+            <b-slider-tick :value="1">Low</b-slider-tick>
+            <b-slider-tick :value="2">Medium</b-slider-tick>
+            <b-slider-tick :value="3">High</b-slider-tick>
+          </b-slider>
+        </b-field>
+        </template>
 
         <b-field>
           <b-checkbox v-model="settings.realColors">Real universe colors</b-checkbox>
@@ -75,7 +91,7 @@
 
         <b-field label="Color palette" v-if="settings.realColors">
           <b-select v-model="settings.realPalette" expanded>
-            <option v-for="(palette, key) in realPalettes" :key="key" :value="key">{{ palette.label }}</option>
+            <option v-for="(palette, key) in palettesForType" :key="key" :value="key">{{ palette.label }}</option>
           </b-select>
         </b-field>
 
@@ -132,7 +148,6 @@ export default defineComponent({
       alpha: 0,
       openned: false,
       planetInstance: this.planet,
-      realPalettes: REAL_PALETTES,
       rotationSpeed: 1, // outside settings: changing it must not rebuild the planet
       settings: {
         terrainSeed: 'GIB GIB',
@@ -142,6 +157,8 @@ export default defineComponent({
         seaLevel: 25,
         water: true,
         coastDetail: 1,
+        bands: 10,
+        turbulence: 1,
         atmosphereDensity: 2,
         atmosphereColor: 'blue',
         realColors: false,
@@ -157,7 +174,18 @@ export default defineComponent({
       this.fadeIn()
     }, 4000);
   },
+  computed: {
+    palettesForType () {
+      const gas = this.settings.type === 'gas'
+      return Object.fromEntries(Object.entries(REAL_PALETTES).filter(([, p]) => !!p.gas === gas))
+    }
+  },
   watch: {
+    'settings.type' () {
+      if (!(this.settings.realPalette in this.palettesForType)) {
+        this.settings.realPalette = Object.keys(this.palettesForType)[0]
+      }
+    },
     rotationSpeed (value) {
       this.game.rotationSpeed = value
     },
@@ -189,6 +217,8 @@ export default defineComponent({
       this.settings.roughness = Math.round(Math.random()*4)
       this.settings.seaLevel = Math.round(Math.random()*55)
       this.settings.coastDetail = Math.round(Math.random()*3)
+      this.settings.bands = Math.round(Math.random()*20+4)
+      this.settings.turbulence = Math.round(Math.random()*3)
       this.settings.atmosphereDensity = Math.round(Math.random()*4)
       this.settings.atmosphereColor = possibleAtmospheres[Math.floor(Math.random()*possibleAtmospheres.length)]
     },

@@ -72,6 +72,15 @@ class PlanetMaterialManager {
     return this._noiseSettings
   }
 
+  get isGas(): boolean {
+    return this.options.type === 'gas'
+  }
+
+  // Never 0: Babylon divides by bump level (NaN → black surface). Gas height is flat anyway.
+  get bumpLevel(): number {
+    return this.options.roughness > 0 ? 0.45 : 0.05
+  }
+
   dispose() {
     if (this._raw) {
       this.heightMap.dispose()
@@ -102,7 +111,7 @@ class PlanetMaterialManager {
         this._raw.diffuseTexture = this.diffuseMap
         this._raw.specularTexture = this.specularMap
         this._raw.bumpTexture = this.bumpMap
-        this._raw.bumpTexture.level = this.options.roughness > 0 ? 0.45 : 0.05
+        this._raw.bumpTexture.level = this.bumpLevel
 
         this.generateBaseTextures(HardwareInfo.hasGoodVideoCard() ? 2048 : 1024).then(() => {
           this._raw.diffuseTexture.dispose()
@@ -113,7 +122,7 @@ class PlanetMaterialManager {
           this._raw.diffuseTexture = this.diffuseMap
           this._raw.specularTexture = this.specularMap
           this._raw.bumpTexture = this.bumpMap
-          this._raw.bumpTexture.level = this.options.roughness > 0 ? 0.45 : 0.05
+          this._raw.bumpTexture.level = this.bumpLevel
         }).catch((e) => console.error(e))
       })
     })
@@ -171,7 +180,7 @@ class PlanetMaterialManager {
     const colorGradient = ColorGradientFactory.generateGradient(
       hashStringToInt(this.options.terrainSeed),
       this.options.realColors ? this.options.realPalette : undefined,
-      this.options.water !== false
+      this.isGas || this.options.water !== false // gas giants use all palette colors
     )
 
     const sphereNormalTexture = new Image();
@@ -195,7 +204,8 @@ class PlanetMaterialManager {
     diffuseMapCtx.fillRect(0, 0, 256, 5);
     const diffuseMapImage = diffuseMapCtx.getImageData(0, 0, resolution, resolution)
 
-    const { heightDataResult, specularDataResult, diffuseDataResult } = await TextureBuilder.buildTextures(hashStringToInt(this.options.terrainSeed), this._noiseSettings, heightMapImage, specularMapImage, diffuseMapImage, this.options.water !== false)
+    const { heightDataResult, specularDataResult, diffuseDataResult } = await TextureBuilder.buildTextures(hashStringToInt(this.options.terrainSeed), this._noiseSettings, heightMapImage, specularMapImage, diffuseMapImage, this.options.water !== false,
+      this.isGas ? { bands: this.options.bands ?? 10, turbulence: this.options.turbulence ?? 1 } : null)
 
     heightMapCtx.putImageData(heightMapImage, 0, 0);
     specularMapCtx.putImageData(specularMapImage, 0, 0);

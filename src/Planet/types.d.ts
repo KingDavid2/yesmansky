@@ -1,6 +1,8 @@
 type PlanetOptions = {
   terrainSeed: string,
-  type: 'terra',
+  type: 'terra' | 'gas',
+  bands?: number, // gas: light bands pole to pole
+  turbulence?: number, // gas: 0-3 band swirl strength
   landMassSize: number,
   roughness: number,
   seaLevel: number,

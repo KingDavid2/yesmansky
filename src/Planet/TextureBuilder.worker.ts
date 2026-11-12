@@ -8,9 +8,12 @@ import { makeNoise3D } from 'open-simplex-noise'
 import { NoiseSettings } from './types'
 import { sharpenCoast, dryHeight } from './coastline'
 import { cubeMapPosition, CUBE_PAD } from './cubeMap'
+import { gasHeight } from './gas'
 const ctx: Worker = self as any;
 
 const normalize = (val, min, max) => ((val - min) / (max - min))
+
+type GasSettings = { bands: number, turbulence: number }
 
 type BuiltTextures = {
   heightData: Uint8ClampedArray,
@@ -19,7 +22,7 @@ type BuiltTextures = {
 }
 
 ctx.addEventListener("message", async (event) => {
-  const result = await _buildTextures(...(event.data as [number, NoiseSettings, Uint8ClampedArray, Uint8ClampedArray, Uint8ClampedArray, boolean]))
+  const result = await _buildTextures(...(event.data as [number, NoiseSettings, Uint8ClampedArray, Uint8ClampedArray, Uint8ClampedArray, boolean, GasSettings | null]))
   ctx.postMessage(result)
 });
 
@@ -32,7 +35,8 @@ const _buildTextures = async (
   heightData: Uint8ClampedArray,
   specularData: Uint8ClampedArray,
   diffuseData: Uint8ClampedArray,
-  water: boolean
+  water: boolean,
+  gas: GasSettings | null = null
 ): Promise<BuiltTextures> => {
   const settings = noiseSettings
 
@@ -52,6 +56,19 @@ const _buildTextures = async (
       heightData[a + 2]
     ]
     if (r + g + b === 0) {
+      continue
+    }
+
+    if (gas) {
+      // Swirls: noise stretched along longitude, bends bands in latitude
+      const k = 0.012
+      const warp = (noise3D(r * k, g * k * 4, b * k) * 0.04 + noise3D(r * k * 4, g * k * 16, b * k * 4) * 0.01) * gas.turbulence
+      const value = gasHeight(g / 127.5 - 1, warp, gas.bands)
+      heightData[a] = heightData[a + 1] = heightData[a + 2] = 128 // flat: no bump
+      diffuseData[a] = colorGradientValues[value * 4]
+      diffuseData[a + 1] = colorGradientValues[value * 4 + 1]
+      diffuseData[a + 2] = colorGradientValues[value * 4 + 2]
+      diffuseData[a + 3] = 255
       continue
     }
 

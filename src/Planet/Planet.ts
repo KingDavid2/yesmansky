@@ -29,6 +29,8 @@ class Planet extends BABYLON.TransformNode {
       roughness: 2,
       seaLevel: 25,
       coastDetail: 1,
+      bands: 10,
+      turbulence: 1,
       atmosphereDensity: 2,
       atmosphereColor: 'blue',
       meshOptions: { diameter: 1, diameterX: 1, subdivisions: 25 },

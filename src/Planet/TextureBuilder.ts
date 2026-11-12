@@ -13,7 +13,7 @@ type BuiltTextures = {
  * @see https://developer.mozilla.org/pt-PT/docs/Web/API/Web_Workers_API
  */
 class TextureBuilder {
-  static buildTextures(seed: number, noiseSettings: NoiseSettings, heightMapImage: ImageData, specularMapImage: ImageData, diffuseMapImage: ImageData, water = true): Promise<BuiltTextures> {
+  static buildTextures(seed: number, noiseSettings: NoiseSettings, heightMapImage: ImageData, specularMapImage: ImageData, diffuseMapImage: ImageData, water = true, gas: { bands: number, turbulence: number } | null = null): Promise<BuiltTextures> {
     const worker = new Worker(new URL('./TextureBuilder.worker.ts', import.meta.url), { type: 'module' })
 
     return new Promise((resolve) => {
@@ -29,7 +29,7 @@ class TextureBuilder {
         })
         worker.terminate()
       });
-      worker.postMessage([seed, noiseSettings, heightMapImage.data, specularMapImage.data, diffuseMapImage.data, water])
+      worker.postMessage([seed, noiseSettings, heightMapImage.data, specularMapImage.data, diffuseMapImage.data, water, gas])
     })
   }
 }
