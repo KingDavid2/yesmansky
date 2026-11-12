@@ -1,3 +1,5 @@
+import { RingOptions } from './rings'
+
 type PlanetOptions = {
   terrainSeed: string,
   type: 'terra' | 'gas',
@@ -12,6 +14,7 @@ type PlanetOptions = {
   atmosphereColor: "blue" | "orange" | "white" | "green" | "purple",
   realColors?: boolean, // use realPalette instead of the seeded random one
   realPalette?: string, // key of REAL_PALETTES
+  rings?: RingOptions[], // empty/undefined = no rings
   meshOptions: { diameter: number, diameterX: number, subdivisions: number }
 }
 
@@ -25,4 +28,4 @@ type NoiseSettings = Array<{
   hard: boolean
 }>
 
-export { NoiseSettings, PlanetOptions }
+export { NoiseSettings, PlanetOptions, RingOptions }

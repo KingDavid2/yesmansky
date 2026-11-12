@@ -120,6 +120,36 @@
             <option value="purple">Argon</option>
           </b-select>
         </b-field>
+
+        <b-tabs>
+          <b-tab-item label="Rings">
+            <b-field>
+              <b-checkbox v-model="ringsEnabled">Rings</b-checkbox>
+            </b-field>
+
+            <template v-if="ringsEnabled">
+            <b-field label="Ring count">
+              <b-slider v-model="ringCount" :min="1" :max="5" aria-label="Ring count"></b-slider>
+            </b-field>
+
+            <div v-for="(ring, i) in rings" :key="i">
+              <label class="label has-text-warning">Ring {{ i + 1 }}</label>
+              <b-field label="Width">
+                <b-slider v-model="ring.width" :min="0.05" :max="1" :step="0.05" :aria-label="`Ring ${i + 1} width`"></b-slider>
+              </b-field>
+              <b-field :label="i === 0 ? 'Gap from planet' : 'Gap from previous ring'">
+                <b-slider v-model="ring.gap" :min="0" :max="1" :step="0.05" :aria-label="`Ring ${i + 1} gap`"></b-slider>
+              </b-field>
+              <b-field label="Color">
+                <input type="color" v-model="ring.color" :aria-label="`Ring ${i + 1} color`">
+              </b-field>
+              <b-field label="Angle">
+                <b-slider v-model="ring.angle" :min="-45" :max="45" :aria-label="`Ring ${i + 1} angle`"></b-slider>
+              </b-field>
+            </div>
+            </template>
+          </b-tab-item>
+        </b-tabs>
       </div>
       <footer class="card-footer">
         <a v-on:click="save" class="card-footer-item button is-primary" disabled>Save</a>
@@ -149,6 +179,9 @@ export default defineComponent({
       openned: false,
       planetInstance: this.planet,
       rotationSpeed: 1, // outside settings: changing it must not rebuild the planet
+      ringsEnabled: false, // rings also outside settings: updated live, no rebuild
+      ringCount: 1,
+      rings: [{ width: 0.3, gap: 0.2, angle: 0, color: '#c8a878' }],
       settings: {
         terrainSeed: 'GIB GIB',
         type: 'terra',
@@ -178,6 +211,9 @@ export default defineComponent({
     palettesForType () {
       const gas = this.settings.type === 'gas'
       return Object.fromEntries(Object.entries(REAL_PALETTES).filter(([, p]) => !!p.gas === gas))
+    },
+    activeRings () {
+      return this.ringsEnabled ? this.rings : []
     }
   },
   watch: {
@@ -188,6 +224,16 @@ export default defineComponent({
     },
     rotationSpeed (value) {
       this.game.rotationSpeed = value
+    },
+    ringCount (count) {
+      while (this.rings.length < count) this.rings.push({ width: 0.3, gap: 0.05, angle: 0, color: '#a08060' })
+      this.rings.length = count
+    },
+    activeRings: {
+      handler (rings) {
+        this.planetInstance.setRings(rings)
+      },
+      deep: true
     },
     settings: {
       handler (newSettings) {
@@ -233,7 +279,7 @@ export default defineComponent({
     rebuildPlanet: function (newSettings) {
       console.log('rebuilding planet...');
       this.planetInstance.dispose()
-      this.game.planet = this.planetInstance = markRaw(new Planet('planet', { ...newSettings }, this.game.scene))
+      this.game.planet = this.planetInstance = markRaw(new Planet('planet', { ...newSettings, rings: this.activeRings }, this.game.scene))
     }
   }
 })
