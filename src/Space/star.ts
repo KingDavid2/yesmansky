@@ -18,3 +18,13 @@ export function starLight(distance: number) {
   const intensity = Math.min(5, Math.max(0.1, 1 / distance ** 2))
   return { intensity, size: BASE_SIZE / distance }
 }
+
+export const SYSTEM_SCALE = 20 // scene units per AU in solar system view
+const ORBIT_SPEED = 0.2 // rad/s at 1 AU
+
+/** Star position in the planet's frame (planet stays at origin); Kepler: period ∝ distance^1.5. */
+export function starOrbitPosition(distance: number, t: number) {
+  const radius = SYSTEM_SCALE * distance
+  const angle = t * ORBIT_SPEED / distance ** 1.5
+  return { x: Math.cos(angle) * radius, y: 0, z: Math.sin(angle) * radius }
+}

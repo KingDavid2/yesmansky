@@ -3,13 +3,18 @@ import localforage from 'localforage'
 import { Planet } from './Planet/Planet';
 import { HardwareInfo } from './Infrastructure/HardwareInfo';
 import { starField, twinkle } from './Space/stars';
-import { STAR_CLASSES, StarClass, starLight } from './Space/star';
+import { STAR_CLASSES, StarClass, SYSTEM_SCALE, starLight, starOrbitPosition } from './Space/star';
 
 const STAR_COUNT = 1500 // default
 const STAR_RADIUS = 500
 const SUN_DIR = new BABYLON.Vector3(0.5, 1, 0).normalize() // same side as the ambient light
 const SUN_DISTANCE = 200
 const AMBIENT_WITH_STAR = 0.15 // keep night side faintly visible
+const SYSTEM_STAR_SIZE = 4 // ponytail: not to scale, a real star would be a dot at 20 units/AU
+const CAMERA_RADIUS = 4.5
+
+type StarSettings = { enabled: boolean, starClass: StarClass, distance: number, systemView?: boolean }
+
 /**
  * Handles the whole Babylon engine instance and its
  * main scenes and objects
@@ -24,7 +29,9 @@ class Game {
   starCount = STAR_COUNT
   defaultClearColor: BABYLON.Color4
   stars?: { mesh: BABYLON.Mesh, field: ReturnType<typeof starField>, colors: Float32Array }
-  sun?: { mesh: BABYLON.Mesh, material: BABYLON.StandardMaterial, light: BABYLON.DirectionalLight }
+  sun?: { mesh: BABYLON.Mesh, material: BABYLON.StandardMaterial, light: BABYLON.DirectionalLight, glow: BABYLON.GlowLayer }
+  starSettings?: StarSettings
+  orbitLine?: BABYLON.LinesMesh
 
   constructor(el: HTMLCanvasElement) {
     const engineOptions = {
@@ -38,7 +45,7 @@ class Game {
       "camera",
       Math.PI / 2,
       Math.PI / 3.2,
-      4.5,
+      CAMERA_RADIUS,
       BABYLON.Vector3.Zero(),
       this.scene
     );
@@ -79,6 +86,13 @@ class Game {
       }
       mesh.updateVerticesData(BABYLON.VertexBuffer.ColorKind, colors)
     }
+    if (this.sun && this.starSettings?.enabled && this.starSettings.systemView) {
+      const { x, y, z } = starOrbitPosition(this.starSettings.distance, performance.now() / 1000)
+      this.sun.mesh.position.set(x, y, z)
+      this.sun.light.direction = this.sun.mesh.position.negate().normalize()
+      this.orbitLine?.position.copyFrom(this.sun.mesh.position)
+      this.camera.target.copyFrom(this.sun.mesh.position)
+    }
     this.scene.render();
   }
 
@@ -99,33 +113,81 @@ class Game {
     this.stars.mesh.setEnabled(enabled)
   }
 
-  /** Visible star + directional light; color by spectral class, brightness/size by distance (AU). */
-  setStar({ enabled, starClass, distance }: { enabled: boolean, starClass: StarClass, distance: number }) {
+  /**
+   * Visible star + directional light; color by spectral class, brightness by distance (AU).
+   * System view: star orbits the planet in the planet's frame and the camera follows the star,
+   * so the star reads as the center with the planet orbiting it (planet stays at origin).
+   */
+  setStar(settings: StarSettings) {
+    const { enabled, starClass, distance } = settings
+    const systemView = enabled && !!settings.systemView
+    const wasSystemView = !!(this.starSettings?.enabled && this.starSettings.systemView)
+    this.starSettings = { ...settings }
     this.light.intensity = enabled ? AMBIENT_WITH_STAR : 1
     if (enabled && !this.sun) this.sun = this.createSun()
-    if (!this.sun) return
-    const { mesh, material, light } = this.sun
-    mesh.setEnabled(enabled)
-    light.setEnabled(enabled)
-    if (!enabled) return
-    const color = BABYLON.Color3.FromHexString(STAR_CLASSES[starClass].color)
-    const { intensity, size } = starLight(distance)
-    material.emissiveColor = color
-    light.diffuse = color
-    light.intensity = intensity
-    mesh.scaling.setAll(size)
+    if (this.sun) {
+      const { mesh, material, light } = this.sun
+      mesh.setEnabled(enabled)
+      light.setEnabled(enabled)
+      if (enabled) {
+        const color = BABYLON.Color3.FromHexString(STAR_CLASSES[starClass].color)
+        const { intensity, size } = starLight(distance)
+        material.emissiveColor = color
+        light.diffuse = color
+        light.intensity = intensity
+        mesh.scaling.setAll(systemView ? SYSTEM_STAR_SIZE : size)
+        if (!systemView) {
+          mesh.position = SUN_DIR.scale(SUN_DISTANCE)
+          light.direction = SUN_DIR.negate()
+        }
+      }
+    }
+    this.setOrbitLine(systemView ? distance : 0)
+    if (systemView) {
+      const orbitRadius = SYSTEM_SCALE * distance
+      this.camera.upperRadiusLimit = orbitRadius * 6
+      if (!wasSystemView || this.camera.radius < orbitRadius) this.camera.radius = orbitRadius * 2.5
+    } else if (wasSystemView) {
+      this.camera.target = BABYLON.Vector3.Zero()
+      this.camera.radius = CAMERA_RADIUS
+      this.camera.upperRadiusLimit = null
+    }
+  }
+
+  /** Circle of the planet's orbit around the star; 0 removes it. */
+  setOrbitLine(distance: number) {
+    this.orbitLine?.dispose()
+    this.orbitLine = undefined
+    if (!distance) return
+    const radius = SYSTEM_SCALE * distance
+    const points = Array.from({ length: 129 }, (_, i) => {
+      const a = i / 128 * Math.PI * 2
+      return new BABYLON.Vector3(Math.cos(a) * radius, 0, Math.sin(a) * radius)
+    })
+    this.orbitLine = BABYLON.MeshBuilder.CreateLines('orbitLine', { points }, this.scene)
+    this.orbitLine.color = new BABYLON.Color3(0.4, 0.4, 0.5)
+    this.orbitLine.isPickable = false
   }
 
   createSun() {
-    const mesh = BABYLON.MeshBuilder.CreateSphere('sun', { diameter: 1, segments: 16 }, this.scene)
+    const mesh = BABYLON.MeshBuilder.CreateSphere('sun', { diameter: 1, segments: 32 }, this.scene)
     mesh.position = SUN_DIR.scale(SUN_DISTANCE)
     mesh.isPickable = false
     const material = new BABYLON.StandardMaterial('sunMaterial', this.scene)
     material.disableLighting = true
+    const granulation = new BABYLON.NoiseProceduralTexture('sunGranulation', 256, this.scene)
+    granulation.octaves = 4
+    granulation.persistence = 0.9
+    granulation.brightness = 0.6
+    granulation.animationSpeedFactor = 0.5
+    material.emissiveTexture = granulation // tinted by emissiveColor
     mesh.material = material
+    const glow = new BABYLON.GlowLayer('sunGlow', this.scene, { blurKernelSize: 64 })
+    glow.intensity = 1.2
+    glow.addIncludedOnlyMesh(mesh)
     const light = new BABYLON.DirectionalLight('sunLight', SUN_DIR.negate(), this.scene)
     light.specular = BABYLON.Color3.Black()
-    return { mesh, material, light }
+    return { mesh, material, light, glow }
   }
 
   createStars() {

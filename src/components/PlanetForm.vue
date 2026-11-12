@@ -205,6 +205,9 @@
             <b-field label="Distance to star (AU)">
               <b-slider v-model="star.distance" :min="0.2" :max="5" :step="0.1" aria-label="Distance to star"></b-slider>
             </b-field>
+            <b-field>
+              <b-checkbox v-model="star.systemView">Solar system view</b-checkbox>
+            </b-field>
             </template>
           </b-tab-item>
         </b-tabs>
@@ -245,7 +248,7 @@ export default defineComponent({
       rings: [{ width: 0.3, gap: 0.2, angle: 0, color: '#c8a878' }],
       backgroundEnabled: false, // scene-level, no rebuild
       starCount: 1500,
-      star: { enabled: false, starClass: 'G', distance: 1 }, // scene-level, no rebuild
+      star: { enabled: false, starClass: 'G', distance: 1, systemView: false }, // scene-level, no rebuild
       starClasses: STAR_CLASSES,
       satellitesEnabled: false, // live like rings, no rebuild
       satelliteCount: 1,
@@ -376,7 +379,7 @@ export default defineComponent({
       this.satellitesEnabled = !!saved.satellitesEnabled
       this.backgroundEnabled = !!saved.backgroundEnabled
       this.starCount = saved.starCount ?? 1500
-      Object.assign(this.star, { enabled: false }, saved.star)
+      Object.assign(this.star, { enabled: false, systemView: false }, saved.star)
     },
     setRandomSeed: function () {
       const baseName = ['Planet ', 'Moon ', 'Rogue ', 'Exo ', 'Dwarf ', 'Earth ', 'Hypothetical ', '', '', '']
