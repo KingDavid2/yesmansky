@@ -3,7 +3,7 @@ import localforage from 'localforage'
 import { Planet } from './Planet/Planet';
 import { HardwareInfo } from './Infrastructure/HardwareInfo';
 import { starField, twinkle, nebulaBlobs, nebulaPixels } from './Space/stars';
-import { STAR_CLASSES, StarClass, SYSTEM_SCALE, starLight, starOrbitPosition } from './Space/star';
+import { STAR_CLASSES, StarClass, SYSTEM_SCALE, starLight, starOrbitPosition, radialFalloff, flareStrength } from './Space/star';
 
 const STAR_COUNT = 1500 // default
 const STAR_RADIUS = 500
@@ -13,6 +13,9 @@ const SUN_DISTANCE = 200
 const AMBIENT_WITH_STAR = 0.15 // keep night side faintly visible
 const SYSTEM_STAR_SIZE = 4 // ponytail: not to scale, a real star would be a dot at 20 units/AU
 const CAMERA_RADIUS = 4.5
+const CORONA_SIZE = 5 // corona diameter in star diameters
+// [size (fraction of viewport), position along star -> screen center axis (1 = star, 0 = center, <0 = past center), color weight]
+const FLARES: [number, number, number][] = [[0.35, 1, 0.6], [0.06, 0.5, 0.5], [0.03, 0.2, 0.6], [0.1, -0.2, 0.3], [0.05, -0.5, 0.5], [0.15, -0.8, 0.25]]
 
 type StarSettings = { enabled: boolean, starClass: StarClass, distance: number, systemView?: boolean }
 
@@ -32,7 +35,7 @@ class Game {
   stars?: { mesh: BABYLON.Mesh, field: ReturnType<typeof starField>, colors: Float32Array }
   nebula?: BABYLON.Mesh
   nebulaSettings = { enabled: true, intensity: 1 }
-  sun?: { mesh: BABYLON.Mesh, material: BABYLON.StandardMaterial, light: BABYLON.DirectionalLight, glow: BABYLON.GlowLayer }
+  sun?: { mesh: BABYLON.Mesh, material: BABYLON.StandardMaterial, light: BABYLON.DirectionalLight, glow: BABYLON.GlowLayer, corona: BABYLON.Mesh, flares: BABYLON.LensFlareSystem }
   starSettings?: StarSettings
   orbitLine?: BABYLON.LinesMesh
 
@@ -141,13 +144,17 @@ class Game {
     this.light.intensity = enabled ? AMBIENT_WITH_STAR : 1
     if (enabled && !this.sun) this.sun = this.createSun()
     if (this.sun) {
-      const { mesh, material, light } = this.sun
+      const { mesh, material, light, corona, flares } = this.sun
       mesh.setEnabled(enabled)
       light.setEnabled(enabled)
+      flares.isEnabled = enabled
       if (enabled) {
         const color = BABYLON.Color3.FromHexString(STAR_CLASSES[starClass].color)
         const { intensity, size } = starLight(distance)
         material.emissiveColor = color
+        ;(corona.material as BABYLON.StandardMaterial).emissiveColor = color
+        const strength = flareStrength(distance)
+        flares.lensFlares.forEach((f, i) => f.color = color.scale(FLARES[i][2] * strength))
         light.diffuse = color
         light.intensity = intensity
         mesh.scaling.setAll(systemView ? SYSTEM_STAR_SIZE : size)
@@ -198,7 +205,7 @@ class Game {
     material.emissiveTexture = granulation // tinted by emissiveColor
     mesh.material = material
     const glow = new BABYLON.GlowLayer('sunGlow', this.scene, { blurKernelSize: 64 })
-    glow.intensity = 1.2
+    glow.intensity = 1.5
     // every mesh enters the glow map so the planet occludes the halo; only the sun emits
     glow.customEmissiveColorSelector = (m, _subMesh, _material, result) => {
       if (m === mesh) result.set(material.emissiveColor.r, material.emissiveColor.g, material.emissiveColor.b, 1)
@@ -206,7 +213,31 @@ class Game {
     }
     const light = new BABYLON.DirectionalLight('sunLight', SUN_DIR.negate(), this.scene)
     light.specular = BABYLON.Color3.Black()
-    return { mesh, material, light, glow }
+
+    // soft additive halo; depth-tested so the planet hides it
+    const SPRITE = 128
+    const sprite = () => BABYLON.RawTexture.CreateRGBATexture(new Uint8Array(radialFalloff(SPRITE).buffer), SPRITE, SPRITE, this.scene, false)
+    const corona = BABYLON.MeshBuilder.CreatePlane('sunCorona', { size: CORONA_SIZE }, this.scene)
+    corona.parent = mesh
+    corona.billboardMode = BABYLON.Mesh.BILLBOARDMODE_ALL
+    corona.isPickable = false
+    const coronaMaterial = new BABYLON.StandardMaterial('sunCoronaMaterial', this.scene)
+    coronaMaterial.disableLighting = true
+    coronaMaterial.emissiveTexture = sprite()
+    coronaMaterial.opacityTexture = coronaMaterial.emissiveTexture
+    coronaMaterial.alphaMode = BABYLON.Engine.ALPHA_ADD
+    coronaMaterial.disableDepthWrite = true
+    corona.material = coronaMaterial
+    glow.addExcludedMesh(corona)
+
+    // Babylon places flares on the star -> screen-center axis, fades them near the border and hides them when occluded
+    const flares = new BABYLON.LensFlareSystem('sunFlares', mesh, this.scene)
+    const flareTexture = sprite()
+    for (const [size, position] of FLARES) new BABYLON.LensFlare(size, position, BABYLON.Color3.White(), '', flares).texture = flareTexture
+    flares.meshesSelectionPredicate = m => m.isEnabled() && m.isVisible && !!m.material
+      && m !== mesh && m !== corona && m !== this.nebula && m !== this.stars?.mesh && m !== this.orbitLine
+      && m !== this.planet.mesh.atmosphereMesh
+    return { mesh, material, light, glow, corona, flares }
   }
 
   /** Gaussian-blurred green/blue/purple clouds on an equirect texture inside a big sphere. */

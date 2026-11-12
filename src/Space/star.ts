@@ -28,3 +28,22 @@ export function starOrbitPosition(distance: number, t: number) {
   const angle = t * ORBIT_SPEED / distance ** 1.5
   return { x: Math.cos(angle) * radius, y: 0, z: Math.sin(angle) * radius }
 }
+
+/** Square RGBA sprite: white gaussian spot, premultiplied (rgb = alpha), exactly 0 at the circle edge. */
+export function radialFalloff(size: number) {
+  const out = new Uint8ClampedArray(size * size * 4)
+  const c = size / 2
+  for (let y = 0; y < size; y++) {
+    for (let x = 0; x < size; x++) {
+      const d = Math.hypot(x + 0.5 - c, y + 0.5 - c) / c
+      const v = d >= 1 ? 0 : 255 * Math.exp(-((2.5 * d) ** 2)) * (1 - d)
+      out.fill(v, (y * size + x) * 4, (y * size + x) * 4 + 4)
+    }
+  }
+  return out
+}
+
+/** Lens flare brightness from distance (AU): inverse-square like the light, kept visible. */
+export function flareStrength(distance: number) {
+  return Math.min(1.5, Math.max(0.2, starLight(distance).intensity))
+}

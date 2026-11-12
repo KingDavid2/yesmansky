@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { STAR_CLASSES, SYSTEM_SCALE, starLight, starOrbitPosition } from './star.ts'
+import { STAR_CLASSES, SYSTEM_SCALE, starLight, starOrbitPosition, radialFalloff, flareStrength } from './star.ts'
 
 test('spectral classes O..M each have a hex color', () => {
   assert.deepEqual(Object.keys(STAR_CLASSES), ['O', 'B', 'A', 'F', 'G', 'K', 'M'])
@@ -34,4 +34,23 @@ test('star orbit radius is SYSTEM_SCALE * distance at any time', () => {
 test('farther orbit sweeps a smaller angle in the same time', () => {
   const angle = (d: number) => Math.atan2(starOrbitPosition(d, 1).z, starOrbitPosition(d, 1).x)
   assert.ok(Math.abs(angle(4)) < Math.abs(angle(1)))
+})
+
+test('radial falloff is bright at center, black at corners, premultiplied', () => {
+  const n = 64
+  const px = radialFalloff(n)
+  assert.equal(px.length, n * n * 4)
+  const at = (x: number, y: number) => px[(y * n + x) * 4 + 3]
+  assert.ok(at(n / 2, n / 2) > 240)
+  assert.equal(at(0, 0), 0)
+  assert.equal(at(n - 1, n - 1), 0)
+  assert.equal(at(10, 20), at(n - 1 - 10, n - 1 - 20))
+  const i = (n / 2 * n + 20) * 4
+  assert.equal(px[i], px[i + 3])
+})
+
+test('flare strength fades with distance and is clamped', () => {
+  assert.ok(flareStrength(0.5) > flareStrength(2))
+  assert.equal(flareStrength(0.01), 1.5)
+  assert.equal(flareStrength(100), 0.2)
 })
