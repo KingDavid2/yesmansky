@@ -184,7 +184,11 @@ class Game {
     mesh.material = material
     const glow = new BABYLON.GlowLayer('sunGlow', this.scene, { blurKernelSize: 64 })
     glow.intensity = 1.2
-    glow.addIncludedOnlyMesh(mesh)
+    // every mesh enters the glow map so the planet occludes the halo; only the sun emits
+    glow.customEmissiveColorSelector = (m, _subMesh, _material, result) => {
+      if (m === mesh) result.set(material.emissiveColor.r, material.emissiveColor.g, material.emissiveColor.b, 1)
+      else result.set(0, 0, 0, 0)
+    }
     const light = new BABYLON.DirectionalLight('sunLight', SUN_DIR.negate(), this.scene)
     light.specular = BABYLON.Color3.Black()
     return { mesh, material, light, glow }
