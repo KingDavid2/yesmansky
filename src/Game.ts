@@ -3,9 +3,13 @@ import localforage from 'localforage'
 import { Planet } from './Planet/Planet';
 import { HardwareInfo } from './Infrastructure/HardwareInfo';
 import { starField, twinkle } from './Space/stars';
+import { STAR_CLASSES, StarClass, starLight } from './Space/star';
 
 const STAR_COUNT = 1500 // default
 const STAR_RADIUS = 500
+const SUN_DIR = new BABYLON.Vector3(0.5, 1, 0).normalize() // same side as the ambient light
+const SUN_DISTANCE = 200
+const AMBIENT_WITH_STAR = 0.15 // keep night side faintly visible
 /**
  * Handles the whole Babylon engine instance and its
  * main scenes and objects
@@ -20,6 +24,7 @@ class Game {
   starCount = STAR_COUNT
   defaultClearColor: BABYLON.Color4
   stars?: { mesh: BABYLON.Mesh, field: ReturnType<typeof starField>, colors: Float32Array }
+  sun?: { mesh: BABYLON.Mesh, material: BABYLON.StandardMaterial, light: BABYLON.DirectionalLight }
 
   constructor(el: HTMLCanvasElement) {
     const engineOptions = {
@@ -92,6 +97,35 @@ class Game {
     this.stars.mesh.dispose(false, true)
     this.stars = this.createStars()
     this.stars.mesh.setEnabled(enabled)
+  }
+
+  /** Visible star + directional light; color by spectral class, brightness/size by distance (AU). */
+  setStar({ enabled, starClass, distance }: { enabled: boolean, starClass: StarClass, distance: number }) {
+    this.light.intensity = enabled ? AMBIENT_WITH_STAR : 1
+    if (enabled && !this.sun) this.sun = this.createSun()
+    if (!this.sun) return
+    const { mesh, material, light } = this.sun
+    mesh.setEnabled(enabled)
+    light.setEnabled(enabled)
+    if (!enabled) return
+    const color = BABYLON.Color3.FromHexString(STAR_CLASSES[starClass].color)
+    const { intensity, size } = starLight(distance)
+    material.emissiveColor = color
+    light.diffuse = color
+    light.intensity = intensity
+    mesh.scaling.setAll(size)
+  }
+
+  createSun() {
+    const mesh = BABYLON.MeshBuilder.CreateSphere('sun', { diameter: 1, segments: 16 }, this.scene)
+    mesh.position = SUN_DIR.scale(SUN_DISTANCE)
+    mesh.isPickable = false
+    const material = new BABYLON.StandardMaterial('sunMaterial', this.scene)
+    material.disableLighting = true
+    mesh.material = material
+    const light = new BABYLON.DirectionalLight('sunLight', SUN_DIR.negate(), this.scene)
+    light.specular = BABYLON.Color3.Black()
+    return { mesh, material, light }
   }
 
   createStars() {

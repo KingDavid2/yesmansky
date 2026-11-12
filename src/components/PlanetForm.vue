@@ -191,6 +191,21 @@
             <b-field v-if="backgroundEnabled" label="Number of stars">
               <b-slider v-model="starCount" :min="100" :max="5000" :step="100" lazy aria-label="Number of stars"></b-slider>
             </b-field>
+
+            <b-field>
+              <b-checkbox v-model="star.enabled">Star</b-checkbox>
+            </b-field>
+
+            <template v-if="star.enabled">
+            <b-field label="Star class">
+              <b-select v-model="star.starClass" expanded>
+                <option v-for="(starClass, key) in starClasses" :key="key" :value="key">{{ starClass.label }}</option>
+              </b-select>
+            </b-field>
+            <b-field label="Distance to star (AU)">
+              <b-slider v-model="star.distance" :min="0.2" :max="5" :step="0.1" aria-label="Distance to star"></b-slider>
+            </b-field>
+            </template>
           </b-tab-item>
         </b-tabs>
       </div>
@@ -211,6 +226,7 @@ import { defineComponent, markRaw } from 'vue';
 import { Planet } from '../Planet/Planet';
 import { Game } from '../Game';
 import { REAL_PALETTES } from '../Planet/realPalettes';
+import { STAR_CLASSES } from '../Space/star';
 
 export default defineComponent({
   name: 'PlanetForm',
@@ -229,6 +245,8 @@ export default defineComponent({
       rings: [{ width: 0.3, gap: 0.2, angle: 0, color: '#c8a878' }],
       backgroundEnabled: false, // scene-level, no rebuild
       starCount: 1500,
+      star: { enabled: false, starClass: 'G', distance: 1 }, // scene-level, no rebuild
+      starClasses: STAR_CLASSES,
       satellitesEnabled: false, // live like rings, no rebuild
       satelliteCount: 1,
       satellites: [{ width: 0.15, gap: 1, angle: 10, color: '#aaaaaa', shape: 'irregular', rotationSpeed: 1, translationSpeed: 1 }],
@@ -284,6 +302,12 @@ export default defineComponent({
     starCount (value) {
       this.game.setStarCount(value)
     },
+    star: {
+      handler (value) {
+        this.game.setStar(value)
+      },
+      deep: true
+    },
     ringCount (count) {
       while (this.rings.length < count) this.rings.push({ width: 0.3, gap: 0.05, angle: 0, color: '#a08060' })
       this.rings.length = count
@@ -315,8 +339,8 @@ export default defineComponent({
   },
   methods: {
     save: function () {
-      const { settings, rotationSpeed, ringsEnabled, rings, satellitesEnabled, satellites, backgroundEnabled, starCount } = this
-      const json = JSON.stringify({ settings, rotationSpeed, ringsEnabled, rings, satellitesEnabled, satellites, backgroundEnabled, starCount }, null, 2)
+      const { settings, rotationSpeed, ringsEnabled, rings, satellitesEnabled, satellites, backgroundEnabled, starCount, star } = this
+      const json = JSON.stringify({ settings, rotationSpeed, ringsEnabled, rings, satellitesEnabled, satellites, backgroundEnabled, starCount, star }, null, 2)
       const link = document.createElement('a')
       link.href = URL.createObjectURL(new Blob([json], { type: 'application/json' }))
       link.download = `${settings.terrainSeed || 'planet'}.json`
@@ -352,6 +376,7 @@ export default defineComponent({
       this.satellitesEnabled = !!saved.satellitesEnabled
       this.backgroundEnabled = !!saved.backgroundEnabled
       this.starCount = saved.starCount ?? 1500
+      Object.assign(this.star, { enabled: false }, saved.star)
     },
     setRandomSeed: function () {
       const baseName = ['Planet ', 'Moon ', 'Rogue ', 'Exo ', 'Dwarf ', 'Earth ', 'Hypothetical ', '', '', '']
